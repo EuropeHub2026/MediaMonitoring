@@ -1,0 +1,5 @@
+actor_id,name,type,affiliation,role,top_tier,status,as_of,aliases
+student_list,Student List – Students Win,list,,Election winner,no,seed,2026-10-30,
+vladimir_lucic,Vladimir Lučić,person,,CEO of Telekom Srbija,yes,confirmed,2026-10-30,
+telekom_srbija,Telekom Srbija,state_company,,,yes,seed,2026-10-30,
+someone_new,Someone New,person,,Unverified,no,proposed,2026-10-30,

@@ -1,0 +1,12 @@
+project:
+  name: Test Monitor
+  user_agent_name: TestMonitor/0.0
+  repo_url: https://example.invalid/repo
+  contact_email: monitor-contact@example.org
+timezone: Europe/Belgrade
+paths:
+  data_dir: data
+  log_dir: data/logs
+outlet_groups: [official, serbian_independent, serbian_pro_government, international, aggregator]
+http:
+  min_seconds_between_requests_per_domain: 2

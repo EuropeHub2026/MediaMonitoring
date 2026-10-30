@@ -1,0 +1,97 @@
+# Serbia Post-Election Monitor: settings shared by every script.
+# Secrets never go here; they come from the environment (Codespaces secrets or .env) via config.py.
+# This file is public. Do not put anything in it that assumes secrecy.
+
+project:
+  name: Serbia Post-Election Monitor
+  user_agent_name: SerbiaPostElectionMonitor/0.1
+  repo_url: https://github.com/EuropeHub2026/MediaMonitoring
+  # Shown in the User-Agent and as the takedown contact in the method notes.
+  # Collectors refuse to run while this is still the placeholder.
+  contact_email: hoplizo@proton.me
+
+timezone: Europe/Belgrade
+
+schedule:
+  collect_at: "06:00"
+  draft_ready_by: "07:30"
+  publish_by: "09:00"
+  # Collection runs every day; briefs only on these days. Monday covers since Friday's brief.
+  brief_weekdays: [mon, tue, wed, thu, fri]
+
+paths:
+  data_dir: data
+  review_dir: review
+  exports_dir: exports
+  docs_dir: docs
+  validation_dir: data/validation
+  outlets_csv: outlets.csv
+  actors_csv: actors.csv
+  links_csv: data/links.csv
+  articles_csv: data/articles.csv
+  coded_jsonl: data/coded.jsonl
+  trackers_json: data/trackers.json
+  log_dir: data/logs
+
+# The fixed outlet groups (CLAUDE.md, Scope decisions). outlets.csv may only use these.
+outlet_groups: [official, serbian_independent, serbian_pro_government, international, aggregator]
+
+languages:
+  active: [sr, en]
+  later: [fr, de]   # stage 4, via Google News editions
+
+http:
+  min_seconds_between_requests_per_domain: 2
+  timeout_seconds: 20
+  # Never retry on 403 or 429 (CLAUDE.md, Hard rules). Only transient server errors are retried.
+  retry_statuses: [500, 502, 503, 504]
+  max_retries: 2
+
+collection:
+  # Fallback window when there is no previous brief to measure "since the last brief" from.
+  default_lookback_hours: 26
+  google_news:
+    editions:
+      en: {hl: en-US, gl: US, ceid: "US:en"}
+      sr: {hl: sr, gl: RS, ceid: "RS:sr"}
+    # Keyword searches per language, run in addition to per-outlet site: queries.
+    queries:
+      en:
+        - Serbia government
+        - Serbia election
+        - Serbia Student List
+        - Belgrade resignation
+        - Serbia prosecutor
+      sr:
+        - Studentska lista
+        - ostavka
+        - smena direktora
+        - RIK izbori
+        - Vlada Srbije
+        - тужилаштво
+  # Applied to outlets with needs_keyword_filter = yes (broad international feeds).
+  serbia_keywords: [Serbia, Serbian, Belgrade, Vučić, Vucic, Novi Sad, Srbija, Beograd]
+
+grouping:
+  title_similarity_threshold: 85   # rapidfuzz token_set_ratio, 0-100
+  window_hours: 48
+
+coding:
+  model_env: OPENAI_MODEL
+  brief_model_env: OPENAI_MODEL_BRIEF
+  max_text_chars: 12000
+  temperature: 0
+  max_stories_per_run: 400   # soft guard on spend; the hard cap is the provider budget alert
+
+brief:
+  min_items: 5
+  max_items: 8
+
+# Stage 4 and 5. Collectors read accounts and pages from these lists only.
+social:
+  enabled: false
+  x_accounts: []
+  x_daily_keyword_search: ""
+  youtube_channels: []
+  telegram_channels: []
+  facebook_pages: []

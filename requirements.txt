@@ -1,0 +1,12 @@
+# Pinned 30 Oct 2026. Add packages here as each stage needs them (WeasyPrint at stage 3).
+feedparser==6.0.14
+openai==3.41.0
+pydantic==2.14.2
+pypdf==6.21.4
+pytest==9.2.0
+python-dotenv==1.2.4
+PyYAML==6.0.3
+rapidfuzz==3.14.6
+requests==2.34.2
+trafilatura==2.3.1
+tzdata==2026.6

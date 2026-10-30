@@ -1,0 +1,22 @@
+{
+  "relevant": true,
+  "category": "resignation_call",
+  "secondary_category": "institution_change",
+  "top_tier": true,
+  "article_type": "news",
+  "actors": ["student_list", "telekom_srbija", "vladimir_lucic"],
+  "entities": [
+    {
+      "person_or_body": "vladimir_lucic",
+      "proposed": false,
+      "role": "CEO of Telekom Srbija",
+      "action": "dismissal_demanded",
+      "by_whom": "Student List",
+      "response": "not_addressed",
+      "stance": -1
+    }
+  ],
+  "summary": "Student List candidates demanded the dismissal of Telekom Srbija's CEO. They also called for a review of state contracts.",
+  "why_it_matters": "Control of the state telecom operator shapes Serbia's media market and is an early test of the incoming majority.",
+  "evidence_quote": "Zahtevamo smenu Vladimira Lučića"
+}

@@ -1,0 +1,79 @@
+actor_id,name,type,affiliation,role,top_tier,status,as_of,aliases
+student_list,Student List – Students Win,list,,Won the 25 Oct 2026 parliamentary election (141 seats projected),no,seed,2026-10-30,Studentska lista;Studenti pobeđuju;Студентска листа
+students_in_blockade,Students in Blockade,movement,,Student protest movement behind the Student List,no,seed,2026-10-30,Studenti u blokadi;Студенти у блокади
+united_serbia,Aleksandar Vučić – United Serbia,list,sns,SNS-led list (103 seats projected),no,seed,2026-10-30,Ujedinjena Srbija;Уједињена Србија
+sns,Serbian Progressive Party (SNS),party,,Ruling party 2012–2026,no,seed,2026-10-30,SNS;Srpska napredna stranka;Српска напредна странка;naprednjaci
+sps,Socialist Party of Serbia (SPS),party,,Below threshold on 25 Oct 2026,no,seed,2026-10-30,SPS;Socijalistička partija Srbije
+new_dss,New Democratic Party of Serbia (New DSS),party,,Below threshold on 25 Oct 2026,no,seed,2026-10-30,Nova DSS;NDSS
+ssp,Party of Freedom and Justice (SSP),party,,Below threshold on 25 Oct 2026,no,seed,2026-10-30,SSP;Stranka slobode i pravde
+svm,Alliance of Vojvodina Hungarians (SVM),party,,Minority list in parliament,no,seed,2026-10-30,SVM;VMSZ;Savez vojvođanskih Mađara
+albanian_coalition,Albanian Coalition,list,,Minority list in parliament,no,seed,2026-10-30,Albanska koalicija
+sda_sandzak,SDA Sandžak,party,,Minority list in parliament,no,seed,2026-10-30,SDA;Stranka demokratske akcije Sandžaka
+ljajic_list,Rasim Ljajić – Humanly,list,,Minority list in parliament,no,seed,2026-10-30,SDPS;Ljudski
+aleksandar_vucic,Aleksandar Vučić,person,sns,Former President (resigned 27 Sep 2026); leader of United Serbia list; SNS presidency member,no,seed,2026-10-30,Vučić;Vucic;Вучић
+ana_brnabic,Ana Brnabić,person,sns,Speaker of the National Assembly; acting President,yes,seed,2026-10-30,Brnabić;Brnabic;Брнабић
+ivica_dacic,Ivica Dačić,person,sps,Caretaker Minister of Interior; SPS leader,yes,seed,2026-10-30,Dačić;Dacic;Дачић
+marko_duric,Marko Đurić,person,sns,Caretaker Minister of Foreign Affairs,yes,seed,2026-10-30,Đurić;Djuric;Ђурић
+sinisa_mali,Siniša Mali,person,sns,Caretaker Minister of Finance,yes,seed,2026-10-30,Mali;Синиша Мали
+jorgovanka_tabakovic,Jorgovanka Tabaković,person,,Governor of the National Bank of Serbia,yes,seed,2026-10-30,Tabaković;Tabakovic;Табаковић
+zagorka_dolovac,Zagorka Dolovac,person,,Supreme Public Prosecutor,yes,seed,2026-10-30,Dolovac;Доловац
+vladimir_dimitrijevic,Vladimir Dimitrijević,person,,President of the Republic Electoral Commission (RIK),yes,seed,2026-10-30,Dimitrijević;Димитријевић
+vladimir_lucic,Vladimir Lučić,person,,CEO of Telekom Srbija,yes,seed,2026-10-30,Lučić;Lucic;Лучић
+manja_grcic,Manja Grčić,person,,RTS Director General (resigned 29 Oct 2026),yes,seed,2026-10-30,Grčić;Grcic;Грчић
+radomir_saicic,Radomir Saičić,person,student_list,Student List candidate; academician,no,seed,2026-10-30,Saičić;Саичић
+dejan_soskic,Dejan Šoškić,person,student_list,Student List candidate; economics professor,no,seed,2026-10-30,Šoškić;Soskic;Шошкић
+jovo_bakic,Jovo Bakić,person,student_list,Student List candidate; sociology professor,no,seed,2026-10-30,Bakić;Bakic;Бакић
+nemanja_karovic,Nemanja Karović,person,student_list,Student List candidate,no,seed,2026-10-30,Karović;Karovic;Каровић
+jovan_vujicic,Jovan Vujičić,person,student_list,Student List candidate,no,seed,2026-10-30,Vujičić;Вујичић
+mirjana_nikolic,Mirjana Nikolić,person,student_list,Student List candidate,no,seed,2026-10-30,
+ivan_sebek,Ivan Šebek,person,student_list,RIK member representing the Student List,no,seed,2026-10-30,Šebek;Шебек
+milos_jovanovic,Miloš Jovanović,person,new_dss,New DSS leader,no,seed,2026-10-30,
+dragan_djilas,Dragan Đilas,person,ssp,SSP leader,no,seed,2026-10-30,Đilas;Djilas;Ђилас
+marinika_tepic,Marinika Tepić,person,ssp,SSP leader,no,seed,2026-10-30,Tepić;Тепић
+dragan_vucicevic,Dragan J. Vučićević,person,informer,Editor-in-chief of Informer,no,seed,2026-10-30,Vučićević;Вучићевић
+zeljko_mitrovic,Željko Mitrović,person,pink,Owner of TV Pink,no,seed,2026-10-30,Mitrović;Митровић
+davor_macura,Davor Macura,person,,Owner of Alta banka and Alta grupa,no,seed,2026-10-30,Macura;Мацура
+marko_cadez,Marko Čadež,person,pks,President of the Chamber of Commerce and Industry of Serbia,no,seed,2026-10-30,Čadež;Cadez;Чадеж
+government,Government of Serbia,institution,,Caretaker government until handover,yes,seed,2026-10-30,Vlada Srbije;Влада Србије
+presidency,Presidency of Serbia,institution,,,yes,seed,2026-10-30,Predsedništvo
+national_assembly,National Assembly,institution,,,yes,seed,2026-10-30,Narodna skupština;Скупштина
+rik,Republic Electoral Commission (RIK),institution,,,yes,seed,2026-10-30,RIK;Republička izborna komisija;РИК
+rem,Regulatory Authority for Electronic Media (REM),institution,,,yes,seed,2026-10-30,REM;РЕМ
+rts,Radio Television of Serbia (RTS),institution,,Public broadcaster,yes,seed,2026-10-30,RTS;РТС
+nbs,National Bank of Serbia (NBS),institution,,,yes,seed,2026-10-30,NBS;Narodna banka Srbije;НБС
+vjt,Supreme Public Prosecutor's Office,institution,,,yes,seed,2026-10-30,VJT;Vrhovno javno tužilaštvo;RJT
+tok,Prosecutor's Office for Organized Crime (TOK),institution,,,yes,seed,2026-10-30,TOK;Tužilaštvo za organizovani kriminal;ТОК
+mup,Ministry of Interior,institution,,,yes,seed,2026-10-30,MUP;МУП
+police,Police Directorate,institution,,,yes,seed,2026-10-30,Direkcija policije
+bia,Security Information Agency (BIA),institution,,,yes,seed,2026-10-30,BIA;БИА
+mfa,Ministry of Foreign Affairs,institution,,,yes,seed,2026-10-30,MSP
+ministry_finance,Ministry of Finance,institution,,,yes,seed,2026-10-30,Ministarstvo finansija
+ministry_justice,Ministry of Justice,institution,,,yes,seed,2026-10-30,Ministarstvo pravde
+constitutional_court,Constitutional Court,institution,,,no,seed,2026-10-30,Ustavni sud
+dri,State Audit Institution (DRI),institution,,,no,seed,2026-10-30,DRI;Državna revizorska institucija
+fiscal_council,Fiscal Council,institution,,,no,seed,2026-10-30,Fiskalni savet
+kzk,Commission for Protection of Competition,institution,,,no,seed,2026-10-30,KZK
+telekom_srbija,Telekom Srbija,state_company,,,yes,seed,2026-10-30,Telekom;Телеком Србија
+eps,Elektroprivreda Srbije (EPS),state_company,,,yes,seed,2026-10-30,EPS;ЕПС
+nis,NIS (Naftna industrija Srbije),state_company,,Majority owned by Gazprom Neft; under US sanctions,yes,seed,2026-10-30,NIS;НИС
+srbijagas,Srbijagas,state_company,,,yes,seed,2026-10-30,Србијагас
+srbijavoz,Srbijavoz,state_company,,,no,seed,2026-10-30,
+postanska_stedionica,Banka Poštanska štedionica,state_company,,,no,seed,2026-10-30,Poštanska štedionica
+expo_2027,EXPO 2027,state_company,,,no,seed,2026-10-30,Expo 2027
+informer,Informer,media,,,no,seed,2026-10-30,TV Informer;Informer TV
+pink,TV Pink,media,,,no,seed,2026-10-30,RTV Pink
+pks,Chamber of Commerce and Industry of Serbia (PKS),civil_society,,,no,seed,2026-10-30,PKS;Privredna komora Srbije
+cesid,CeSID,civil_society,,,no,seed,2026-10-30,
+crta,CRTA,civil_society,,,no,seed,2026-10-30,
+transparency_serbia,Transparency Serbia,civil_society,,,no,seed,2026-10-30,Transparentnost Srbija
+eu,European Union,foreign,,Including the European Commission,no,seed,2026-10-30,EU;European Commission;Evropska unija
+us_government,United States government,foreign,,Including the State Department and Congress,no,seed,2026-10-30,US;State Department
+ofac,US Office of Foreign Assets Control (OFAC),foreign,,,no,seed,2026-10-30,OFAC
+russia,Russian government,foreign,,Including the Kremlin,no,seed,2026-10-30,Kremlin;Russia
+hungary,Hungarian government,foreign,,,no,seed,2026-10-30,Hungary
+mol,MOL,company,,Prospective buyer of Gazprom Neft's NIS stake,no,seed,2026-10-30,
+gazprom_neft,Gazprom Neft,company,,Majority owner of NIS,no,seed,2026-10-30,Gazprom
+rio_tinto,Rio Tinto,company,,Jadar lithium project,no,seed,2026-10-30,Jadar
+imf,International Monetary Fund,international_org,,,no,seed,2026-10-30,IMF;MMF
+world_bank,World Bank,international_org,,,no,seed,2026-10-30,Svetska banka
+fitch,Fitch Ratings,company,,Rating agency,no,seed,2026-10-30,Fitch

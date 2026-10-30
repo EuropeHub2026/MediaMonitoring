@@ -1,0 +1,19 @@
+{
+  "name": "Serbia Post-Election Monitor",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.12-bookworm",
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y --no-install-recommends libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b libharfbuzz-subset0 && pip install -r requirements.txt",
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": { "label": "Page preview (python -m http.server --directory docs 8000)" }
+  },
+  "secrets": {
+    "OPENAI_API_KEY": { "description": "OpenAI API key for story coding and briefs" },
+    "OPENAI_MODEL": { "description": "Model used by 3_code_stories.py" },
+    "OPENAI_MODEL_BRIEF": { "description": "Stronger model used by 4_draft_brief.py and 11_weekly_digest.py" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python"]
+    }
+  }
+}

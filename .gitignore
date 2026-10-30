@@ -1,0 +1,12 @@
+# Never leaves the repository (see CLAUDE.md, Hard rules)
+data/
+review/
+exports/
+.env
+
+# Licensed third-party newsletter (Executive Newsletter / Ninamedia): reference only, redistribution prohibited
+ExecutiveBriefings/
+
+__pycache__/
+*.pyc
+.pytest_cache/
