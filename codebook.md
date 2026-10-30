@@ -1,6 +1,6 @@
 # Codebook
 
-**Version 0.1.0** (30 Oct 2026). Prompt version 0.1.0.
+**Version 0.1.1** (30 Oct 2026). Prompt version 0.1.0. Triage prompt version 0.1.0.
 
 This is the plain-English codebook for the Serbia Post-Election Monitor. `codebook.py`
 holds the same lists, the `Extraction` schema and the prompt. Keep the two in sync and
@@ -24,6 +24,16 @@ A **story** is one event or announcement reported by one or more outlets. Copies
 same story are grouped under one `story_id` at collection; the story is coded once, from
 its fullest copy. A **thread** (`thread_id`) links stories about the same running issue on
 different days (e.g. the NIS licence, a dismissal demand later met).
+
+## Headline triage
+
+Before any page is fetched, each story's headline is screened in batches by the cheaper
+coding model. `possibly_relevant` is true if the story could fall under any category
+above the line `background`, or concern economic stability linked to the transition. It
+is false only for clearly unrelated stories (sport, entertainment, weather, non-political
+crime, lifestyle, foreign news not about Serbia). **When in doubt, true:** triage is
+tuned for recall, and the full coding decides `relevant`. Only possibly relevant stories
+have their text extracted and coded.
 
 ## Story-level fields (coded by the model)
 
@@ -188,3 +198,4 @@ when someone leaves a post: update `role` and `as_of`.
 | Version | Date | Change | Validation |
 |---|---|---|---|
 | 0.1.0 | 30 Oct 2026 | First version. | No hand-coded sample yet. |
+| 0.1.1 | 30 Oct 2026 | Added headline triage (schema and prompt); story-level definitions unchanged. | No hand-coded sample yet. |

@@ -44,7 +44,7 @@ ap,Associated Press,apnews.com,international,3,en,latn,,,yes,yes,no,yes,2026-10-
 bbc,BBC News,bbc.co.uk,international,3,en,latn,https://feeds.bbci.co.uk/news/world/europe/rss.xml,,yes,yes,no,yes,2026-10-30,Europe feed
 guardian,The Guardian,theguardian.com,international,3,en,latn,https://www.theguardian.com/world/serbia/rss,,yes,no,no,yes,2026-10-30,Serbia tag feed
 ft,Financial Times,ft.com,international,3,en,latn,,,yes,yes,yes,yes,,Paywall: headline and free text only
-bloomberg,Bloomberg,bloomberg.com,international,3,en,latn,,https://www.bloomberg.com/sitemaps/news/latest.xml,yes,yes,yes,yes,2026-10-30,Global news sitemap; keyword filter; paywall: headline and free text only
+bloomberg,Bloomberg,bloomberg.com,international,3,en,latn,,https://www.bloomberg.com/sitemaps/news/latest.xml,yes,yes,yes,yes,2026-10-30,"Global news sitemap; keyword filter; article pages return 403 (30 Oct), so headline-only"
 rferl,Radio Free Europe/Radio Liberty,rferl.org,international,3,en,latn,,,yes,yes,no,yes,2026-10-30,API feed returned no items
 dw,Deutsche Welle (English),dw.com,international,3,en,latn,https://rss.dw.com/rdf/rss-en-all,,yes,yes,no,yes,2026-10-30,All-news feed; keyword filter
 politico_eu,Politico Europe,politico.eu,international,2,en,latn,https://www.politico.eu/feed/,,yes,yes,partial,yes,2026-10-30,

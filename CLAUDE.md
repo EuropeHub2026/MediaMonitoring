@@ -72,7 +72,12 @@ the handover (e.g. Ivica Dačić caretaker interior minister).
   consent page, so a Google item is matched by title to a direct copy from the same outlet
   and dropped if found; otherwise it is kept as a headline-only row (`text_route =
   headline_only`) linking to Google News. Sites that answer 401/403 to the collector (AP,
-  Reuters, Tanjug as of 30 Oct) are reached only through Google News headlines.
+  Reuters, Tanjug as of 30 Oct) are reached only through Google News headlines;
+  Bloomberg's sitemap works but its article pages return 403, so Bloomberg items stay
+  headline-only.
+- **Volume (decided 30 Oct):** a day yields about 2,000+ stories, mostly sport and
+  entertainment. `2_extract_text.py` first screens headlines in batches with the cheaper
+  coding model, tuned for recall; only possibly relevant stories are fetched and coded.
 - **Spend caps:** a budget alert on the AI provider account, the spending limit in the X
   developer console, Apify's prepaid usage. When a cap is hit the collector stops and the
   method notes on the page say so.
@@ -167,7 +172,7 @@ safely: it skips items already done.
 | Script | Does | Writes |
 |---|---|---|
 | `1_collect_press.py` | RSS, news sitemaps and Google News per outlet and language, date filter, crediting to the original outlet, story grouping | `data/links.csv` |
-| `2_extract_text.py` | Fetch pages, extract text (trafilatura), detect junk and language | `data/articles.csv` |
+| `2_extract_text.py` | Headline triage of new stories with the coding model (recall-first), then fetch the best copies of possibly relevant stories, extract text (trafilatura), detect junk and language | `data/triage.csv`, `data/articles.csv` |
 | `3_code_stories.py` | AI coding against the codebook, structured outputs, one row per story; then computes severity from the story group and assigns `thread_id` | `data/coded.jsonl` |
 | `4_draft_brief.py` | Daily brief and alert focus box from the day's coded stories, stronger model, cites story ids | `review/brief_YYYY-MM-DD.md` |
 | `5_build_trackers.py` | Resignations, emerging leaders, transition timeline, institutions watchlist, external reactions from entity rows | `data/trackers.json` |
@@ -265,7 +270,8 @@ The same gate applies to the weekly digest.
 ## Repository layout
 
 ```
-CLAUDE.md  README.md  .gitignore  config.yaml  config.py  http_client.py  outlets.csv  actors.csv
+CLAUDE.md  README.md  .gitignore  config.yaml  config.py  http_client.py  ai_client.py
+outlets.csv  actors.csv
 codebook.md  codebook.py  validation_report.md
 1_collect_press.py  2_extract_text.py  3_code_stories.py  4_draft_brief.py
 5_build_trackers.py  6_export_for_web.py  7_export_pdf.py  8_collect_social.py
@@ -291,7 +297,7 @@ Working days from Monday 2 November 2026. Tick items as they are done and add th
 - [x] `config.yaml`, `config.py`, `outlets.csv` (Serbian independent, Serbian pro-government, official, international), `actors.csv` seeded from scratch (parties, institutions, officials in the first week's coverage) — 30 Oct (actors have `status: seed` until a reviewer signs the list off; `project.contact_email` must be set before collecting)
 - [x] `codebook.md` v0.1 and `codebook.py` with the schema above — 30 Oct (v0.1.0; severity rule and actor-id check in `codebook.py`; `tests/test_codebook.py` keeps the two files in sync)
 - [x] `1_collect_press.py` written from scratch with Serbian sources and story grouping — 30 Oct (first live run: ~2,500 links, ~2,200 stories, 85 s; shared polite client in `http_client.py`)
-- [ ] `2_extract_text.py` written from scratch
+- [x] `2_extract_text.py` written from scratch — 30 Oct (headline triage before fetching, decided 30 Oct to keep coding volume within budget; live text test 39/40 full; triage not yet run live: needs `OPENAI_API_KEY` and `OPENAI_MODEL`)
 - [ ] `3_code_stories.py` with structured outputs, script-computed severity and `thread_id`; coded 30 stories and eyeballed them
 - [ ] First `ExecutiveBriefings/` stories hand-coded into `data/validation/` as the early sample
 - [ ] `4_draft_brief.py` producing the brief and the alert focus box with story ids

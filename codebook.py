@@ -14,8 +14,9 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-CODEBOOK_VERSION = "0.1.0"
+CODEBOOK_VERSION = "0.1.1"
 PROMPT_VERSION = "0.1.0"
+TRIAGE_PROMPT_VERSION = "0.1.0"
 
 MAX_ENTITIES = 5
 MAX_QUOTE_WORDS = 25
@@ -169,6 +170,37 @@ def check_actor_ids(extraction: Extraction, known_ids: set[str]) -> list[str]:
         if not on_list and not row.proposed:
             problems.append(f"{row.person_or_body} is not on the list but not marked proposed")
     return problems
+
+
+# --- Headline triage (before text extraction) ---------------------------------------------
+
+
+class TriageItem(BaseModel):
+    """The triage verdict for one headline."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(description="The id given with the headline.")
+    possibly_relevant: bool
+
+
+class TriageBatch(BaseModel):
+    """Verdicts for one batch of headlines, one per id."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[TriageItem]
+
+
+def triage_prompt_text() -> str:
+    """Return the instructions for the headline triage pass."""
+    return f"""You screen news headlines for a monitor of state-level political change in Serbia after the 25 October 2026 parliamentary election. Each line gives an id and a headline (Serbian or English).
+
+Mark possibly_relevant true if the story could concern any of: posts and appointments, resignations or dismissals, calls to resign; prosecutions, arrests, investigations; the election results, rerun and transition; new political actors; court rulings and election complaints; state companies, regulators, the public broadcaster; protests and political incidents; foreign governments' or international bodies' statements on Serbia; state contracts and major projects; economic stability linked to the transition (sanctions, central bank, banks, currency).
+
+Mark false only for stories clearly outside this: sport, entertainment, celebrities, weather, accidents and crime with no political angle, consumer and lifestyle news, foreign news not about Serbia.
+
+When in doubt, mark true. Return exactly one item per id."""
 
 
 # --- Severity (computed by script, never by the model) -----------------------------------

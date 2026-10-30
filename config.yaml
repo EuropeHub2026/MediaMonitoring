@@ -31,6 +31,8 @@ paths:
   articles_csv: data/articles.csv
   coded_jsonl: data/coded.jsonl
   trackers_json: data/trackers.json
+  triage_csv: data/triage.csv
+  status_json: data/status.json
   log_dir: data/logs
 
 # The fixed outlet groups (CLAUDE.md, Scope decisions). outlets.csv may only use these.
@@ -81,8 +83,17 @@ coding:
   model_env: OPENAI_MODEL
   brief_model_env: OPENAI_MODEL_BRIEF
   max_text_chars: 12000
-  temperature: 0
+  temperature: null   # leave null for models that reject it; set e.g. 0 if the model accepts it
   max_stories_per_run: 400   # soft guard on spend; the hard cap is the provider budget alert
+
+triage:
+  model_env: OPENAI_MODEL
+  batch_size: 60
+
+extract:
+  max_copies_per_story: 2     # text is fetched for the best copies only; all copies still count for reach
+  min_text_chars: 400         # shorter extracted text is marked partial
+  max_html_bytes: 3000000
 
 brief:
   min_items: 5

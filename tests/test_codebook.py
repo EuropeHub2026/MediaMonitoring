@@ -29,6 +29,7 @@ def test_codebook_md_has_version() -> None:
     md = (ROOT / "codebook.md").read_text(encoding="utf-8")
     assert f"**Version {cb.CODEBOOK_VERSION}**" in md
     assert f"Prompt version {cb.PROMPT_VERSION}" in md
+    assert f"Triage prompt version {cb.TRIAGE_PROMPT_VERSION}" in md
 
 
 @pytest.mark.parametrize(

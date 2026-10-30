@@ -1,0 +1,7 @@
+link_id,story_id,url,outlet_id,outlet_group,reach_tier,language,title,title_source,published,collected,via,text_route,source_domain
+l1,s-rts,https://n1info.rs/vesti/grcic-ostavka/,n1,serbian_independent,3,sr,Grčić podnela ostavku na mesto generalne direktorke RTS-a,feed,2026-10-29T10:00:00+01:00,2026-10-29T12:00:00+01:00,rss,direct,n1info.rs
+l2,s-rts,https://www.alo.rs/vesti/grcic.html,alo,serbian_pro_government,2,sr,Grčić podnela ostavku,sitemap,2026-10-29T11:00:00+01:00,2026-10-29T12:00:00+01:00,sitemap,direct,alo.rs
+l3,s-rts,https://www.kurir.rs/grcic,kurir,serbian_pro_government,2,sr,Grčić ostavka,feed,2026-10-29T11:30:00+01:00,2026-10-29T12:00:00+01:00,rss,direct,kurir.rs
+l4,s-sport,https://n1info.rs/sport/teniski-mec/,n1,serbian_independent,3,sr,Đoković pobedio u Bazelu,feed,2026-10-29T09:00:00+01:00,2026-10-29T12:00:00+01:00,rss,direct,n1info.rs
+l5,s-tok,https://news.google.com/rss/articles/CBMiXYZ,tanjug,serbian_pro_government,3,sr,Tužilaštvo otvorilo predmet protiv ministra ostavka,gnews,2026-10-29T08:00:00+01:00,2026-10-29T12:00:00+01:00,gnews_site,headline_only,tanjug.rs
+l6,s-bank,https://www.danas.rs/vesti/banka-ostavka/,danas,serbian_independent,2,sr,Banka i ostavka guvernera,feed,2026-10-29T08:00:00+01:00,2026-10-29T12:00:00+01:00,rss,direct,danas.rs
