@@ -299,6 +299,7 @@ Working days from Monday 2 November 2026. Tick items as they are done and add th
 - [x] `1_collect_press.py` written from scratch with Serbian sources and story grouping — 30 Oct (first live run: ~2,500 links, ~2,200 stories, 85 s; shared polite client in `http_client.py`)
 - [x] `2_extract_text.py` written from scratch — 30 Oct (headline triage before fetching, decided 30 Oct to keep coding volume within budget; live text test 39/40 full; triage not yet run live: needs `OPENAI_API_KEY` and `OPENAI_MODEL`)
 - [ ] `3_code_stories.py` with structured outputs, script-computed severity and `thread_id`; coded 30 stories and eyeballed them
+  - 30 Oct: script built and tested with mocks (most-reported stories first; actor ids corrected and logged; severity refreshed when copies arrive; readable `data/coding_check.md`). Live 30-story run pending the API key.
 - [ ] First `ExecutiveBriefings/` stories hand-coded into `data/validation/` as the early sample
 - [ ] `4_draft_brief.py` producing the brief and the alert focus box with story ids
 - [ ] `publish.py` with the approval gate; `6_export_for_web.py`; `docs/index.html` with the focus box, brief and method notes

@@ -30,6 +30,7 @@ paths:
   links_csv: data/links.csv
   articles_csv: data/articles.csv
   coded_jsonl: data/coded.jsonl
+  coding_check_md: data/coding_check.md
   trackers_json: data/trackers.json
   triage_csv: data/triage.csv
   status_json: data/status.json
@@ -85,6 +86,11 @@ coding:
   max_text_chars: 12000
   temperature: null   # leave null for models that reject it; set e.g. 0 if the model accepts it
   max_stories_per_run: 400   # soft guard on spend; the hard cap is the provider budget alert
+  # Stories are coded most-reported first, so the cap drops the least-reported ones.
+  thread_window_days: 10       # a story can join a thread whose latest story is this recent
+  thread_min_score: 2          # shared entity = 2 points, shared actor = 1 point
+  # Broad actors that appear in most stories and say nothing about which issue it is.
+  thread_ignore_actors: [student_list, students_in_blockade, sns, united_serbia, government, national_assembly]
 
 triage:
   model_env: OPENAI_MODEL
