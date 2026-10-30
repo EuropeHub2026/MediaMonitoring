@@ -1,56 +1,56 @@
-outlet_id,name,domain,outlet_group,reach_tier,language,script,rss_url,google_news,needs_keyword_filter,paywall,active,feed_checked,notes
-srbija_gov,Government of Serbia,srbija.gov.rs,official,3,sr,mixed,https://www.srbija.gov.rs/rss/,no,no,no,yes,2026-10-30,Feed redirects to http
-predsednik,Office of the President,predsednik.rs,official,3,sr,mixed,,yes,no,no,yes,,No RSS found; Google News site query
-parlament,National Assembly,parlament.gov.rs,official,3,sr,mixed,,yes,no,no,yes,2026-10-30,/rss returned 404
-rik,Republic Electoral Commission (RIK),rik.gov.rs,official,3,sr,mixed,,yes,no,no,yes,2026-10-30,Connection failed from Codespace; check site manually during results
-nbs,National Bank of Serbia,nbs.rs,official,3,sr,mixed,,yes,no,no,yes,2026-10-30,/rss returned 404
-vjt,Supreme Public Prosecutor's Office,vjt.gov.rs,official,3,sr,mixed,,yes,no,no,yes,,No RSS checked
-mup,Ministry of Interior,mup.gov.rs,official,2,sr,mixed,,yes,no,no,yes,,No RSS checked
-rem,Regulatory Authority for Electronic Media (REM),rem.rs,official,2,sr,mixed,,yes,no,no,yes,,No RSS checked
-dri,State Audit Institution (DRI),dri.rs,official,1,sr,mixed,,yes,no,no,yes,,No RSS checked
-fiskalni_savet,Fiscal Council,fiskalnisavet.rs,official,1,sr,mixed,,yes,no,no,yes,,No RSS checked
-n1,N1 Serbia,n1info.rs,serbian_independent,3,sr,latn,https://n1info.rs/feed/,yes,no,no,yes,2026-10-30,
-nova,Nova.rs,nova.rs,serbian_independent,2,sr,latn,https://nova.rs/feed/,yes,no,no,yes,2026-10-30,
-danas,Danas,danas.rs,serbian_independent,2,sr,latn,https://www.danas.rs/feed/,yes,no,no,yes,2026-10-30,
-radar,Radar,radar.nova.rs,serbian_independent,2,sr,latn,https://radar.nova.rs/feed/,yes,no,no,yes,2026-10-30,
-vreme,Vreme,vreme.com,serbian_independent,2,sr,latn,https://www.vreme.com/feed/,yes,no,partial,yes,2026-10-30,
-beta,Beta news agency,beta.rs,serbian_independent,3,sr,latn,https://beta.rs/rss,yes,no,partial,yes,2026-10-30,Agency; much text behind subscription
-insajder,Insajder,insajder.net,serbian_independent,2,sr,latn,https://insajder.net/feed,yes,no,no,yes,2026-10-30,
-krik,KRIK,krik.rs,serbian_independent,1,sr,latn,https://www.krik.rs/feed/,yes,no,no,yes,2026-10-30,Investigative
-cins,CINS,cins.rs,serbian_independent,1,sr,latn,https://www.cins.rs/feed/,yes,no,no,yes,2026-10-30,Investigative
-birn_rs,BIRN Serbia,birn.rs,serbian_independent,1,sr,latn,,yes,no,no,yes,2026-10-30,/feed/ returned HTML
-forbes_rs,Forbes Srbija,forbes.n1info.rs,serbian_independent,1,sr,latn,https://forbes.n1info.rs/feed/,yes,no,no,yes,2026-10-30,Business
-nova_ekonomija,Nova ekonomija,novaekonomija.rs,serbian_independent,1,sr,latn,https://novaekonomija.rs/rss,yes,no,partial,yes,2026-10-30,Business
-rse,Radio Slobodna Evropa,slobodnaevropa.org,serbian_independent,2,sr,latn,,yes,no,no,yes,2026-10-30,API feed returned no items
-cenzolovka,Cenzolovka,cenzolovka.rs,serbian_independent,1,sr,latn,https://www.cenzolovka.rs/feed/,yes,no,no,yes,2026-10-30,Media freedom
-juzne_vesti,Južne vesti,juznevesti.com,serbian_independent,1,sr,latn,https://www.juznevesti.com/feed/,yes,no,no,yes,2026-10-30,Niš and south
-portal_021,021.rs,021.rs,serbian_independent,1,sr,latn,,yes,no,no,yes,2026-10-30,Novi Sad; /rss returned 404
-nin,NIN,nin.rs,serbian_independent,1,sr,latn,,yes,no,partial,yes,2026-10-30,/feed/ returned 404
-bloomberg_adria,Bloomberg Adria,bloombergadria.com,serbian_independent,2,sr,latn,,yes,no,no,yes,2026-10-30,Group to be confirmed by reviewer; /rss returned 404
-rts,Radio Television of Serbia (RTS),rts.rs,serbian_pro_government,3,sr,cyrl,,yes,no,no,yes,2026-10-30,Public broadcaster; RSS endpoint unreliable; reviewer to reclassify if editorial line changes after handover
-tanjug,Tanjug,tanjug.rs,serbian_pro_government,3,sr,latn,,yes,no,no,yes,2026-10-30,State news agency; /rss returned HTML
-politika,Politika,politika.rs,serbian_pro_government,3,sr,cyrl,https://www.politika.rs/rss/,yes,no,partial,yes,2026-10-30,
-novosti,Večernje novosti,novosti.rs,serbian_pro_government,2,sr,cyrl,https://www.novosti.rs/rss/vesti,yes,no,no,yes,2026-10-30,
-informer,Informer,informer.rs,serbian_pro_government,2,sr,latn,,yes,no,no,yes,2026-10-30,/rss returned HTML
-kurir,Kurir,kurir.rs,serbian_pro_government,2,sr,latn,https://www.kurir.rs/rss,yes,no,no,yes,2026-10-30,
-blic,Blic,blic.rs,serbian_pro_government,3,sr,latn,https://www.blic.rs/rss/danasnje-vesti,yes,no,no,yes,2026-10-30,Group disputed; reviewer to confirm
-alo,Alo,alo.rs,serbian_pro_government,2,sr,latn,,yes,no,no,yes,2026-10-30,/rss returned 404
-b92,B92,b92.net,serbian_pro_government,2,sr,latn,,yes,no,no,yes,2026-10-30,/rss returned HTML
-pink,RTV Pink,pink.rs,serbian_pro_government,3,sr,latn,,yes,no,no,yes,2026-10-30,/rss returned HTML
-srbija_danas,Srbija Danas,srbijadanas.com,serbian_pro_government,1,sr,latn,https://www.srbijadanas.com/rss.xml,yes,no,no,yes,2026-10-30,
-espreso,Espreso,espreso.co.rs,serbian_pro_government,1,sr,latn,https://www.espreso.co.rs/rss,yes,no,no,yes,2026-10-30,
-reuters,Reuters,reuters.com,international,3,en,latn,,yes,yes,no,yes,2026-10-30,Google News site query works
-ap,Associated Press,apnews.com,international,3,en,latn,,yes,yes,no,yes,,
-bbc,BBC News,bbc.co.uk,international,3,en,latn,https://feeds.bbci.co.uk/news/world/europe/rss.xml,yes,yes,no,yes,2026-10-30,Europe feed
-guardian,The Guardian,theguardian.com,international,3,en,latn,https://www.theguardian.com/world/serbia/rss,yes,no,no,yes,2026-10-30,Serbia tag feed
-ft,Financial Times,ft.com,international,3,en,latn,,yes,yes,yes,yes,,Paywall: headline and free text only
-bloomberg,Bloomberg,bloomberg.com,international,3,en,latn,,yes,yes,yes,yes,,Paywall: headline and free text only
-rferl,Radio Free Europe/Radio Liberty,rferl.org,international,3,en,latn,,yes,yes,no,yes,2026-10-30,API feed returned no items
-dw,Deutsche Welle (English),dw.com,international,3,en,latn,https://rss.dw.com/rdf/rss-en-all,yes,yes,no,yes,2026-10-30,All-news feed; keyword filter
-politico_eu,Politico Europe,politico.eu,international,2,en,latn,https://www.politico.eu/feed/,yes,yes,partial,yes,2026-10-30,
-euractiv,Euractiv,euractiv.com,international,2,en,latn,,yes,yes,no,yes,2026-10-30,Feed returned 403; do not retry; Google News only
-balkan_insight,Balkan Insight,balkaninsight.com,international,2,en,latn,https://balkaninsight.com/feed/,yes,yes,no,yes,2026-10-30,BIRN English; regional
-ewb,European Western Balkans,europeanwesternbalkans.com,international,1,en,latn,https://europeanwesternbalkans.com/feed/,yes,yes,no,yes,2026-10-30,
-intellinews,bne IntelliNews,intellinews.com,international,1,en,latn,https://www.intellinews.com/feed/,yes,yes,yes,yes,2026-10-30,Paywall: headline and free text only
-naslovi,Naslovi.net,naslovi.net,aggregator,1,sr,latn,https://www.naslovi.net/rss,no,no,no,yes,2026-10-30,Credit the original outlet when known
-google_news,Google News,news.google.com,aggregator,1,sr,mixed,,no,no,no,yes,2026-10-30,Collection mechanism; items credited to the original outlet after link decoding
+outlet_id,name,domain,outlet_group,reach_tier,language,script,rss_url,sitemap_url,google_news,needs_keyword_filter,paywall,active,feed_checked,notes
+srbija_gov,Government of Serbia,srbija.gov.rs,official,3,sr,mixed,https://www.srbija.gov.rs/rss/,,no,no,no,yes,2026-10-30,Feed redirects to http
+predsednik,Office of the President,predsednik.rs,official,3,sr,mixed,,,yes,no,no,yes,,No RSS found; Google News site query
+parlament,National Assembly,parlament.gov.rs,official,3,sr,mixed,,,yes,no,no,yes,2026-10-30,/rss returned 404
+rik,Republic Electoral Commission (RIK),rik.gov.rs,official,3,sr,mixed,,,yes,no,no,yes,2026-10-30,Connection failed from Codespace; check site manually during results
+nbs,National Bank of Serbia,nbs.rs,official,3,sr,mixed,,,yes,no,no,yes,2026-10-30,/rss returned 404
+vjt,Supreme Public Prosecutor's Office,vjt.gov.rs,official,3,sr,mixed,,,yes,no,no,yes,,No RSS checked
+mup,Ministry of Interior,mup.gov.rs,official,2,sr,mixed,,,yes,no,no,yes,,No RSS checked
+rem,Regulatory Authority for Electronic Media (REM),rem.rs,official,2,sr,mixed,,,yes,no,no,yes,,No RSS checked
+dri,State Audit Institution (DRI),dri.rs,official,1,sr,mixed,,,yes,no,no,yes,,No RSS checked
+fiskalni_savet,Fiscal Council,fiskalnisavet.rs,official,1,sr,mixed,,,yes,no,no,yes,,No RSS checked
+n1,N1 Serbia,n1info.rs,serbian_independent,3,sr,latn,https://n1info.rs/feed/,,yes,no,no,yes,2026-10-30,
+nova,Nova.rs,nova.rs,serbian_independent,2,sr,latn,https://nova.rs/feed/,,yes,no,no,yes,2026-10-30,
+danas,Danas,danas.rs,serbian_independent,2,sr,latn,https://www.danas.rs/feed/,,yes,no,no,yes,2026-10-30,
+radar,Radar,radar.nova.rs,serbian_independent,2,sr,latn,https://radar.nova.rs/feed/,,yes,no,no,yes,2026-10-30,
+vreme,Vreme,vreme.com,serbian_independent,2,sr,latn,https://www.vreme.com/feed/,,yes,no,partial,yes,2026-10-30,
+beta,Beta news agency,beta.rs,serbian_independent,3,sr,latn,https://beta.rs/rss,,yes,no,partial,yes,2026-10-30,Agency; much text behind subscription
+insajder,Insajder,insajder.net,serbian_independent,2,sr,latn,https://insajder.net/feed,,yes,no,no,yes,2026-10-30,
+krik,KRIK,krik.rs,serbian_independent,1,sr,latn,https://www.krik.rs/feed/,,yes,no,no,yes,2026-10-30,Investigative
+cins,CINS,cins.rs,serbian_independent,1,sr,latn,https://www.cins.rs/feed/,,yes,no,no,yes,2026-10-30,Investigative
+birn_rs,BIRN Serbia,birn.rs,serbian_independent,1,sr,latn,,,yes,no,no,yes,2026-10-30,/feed/ returned HTML
+forbes_rs,Forbes Srbija,forbes.n1info.rs,serbian_independent,1,sr,latn,https://forbes.n1info.rs/feed/,,yes,no,no,yes,2026-10-30,Business
+nova_ekonomija,Nova ekonomija,novaekonomija.rs,serbian_independent,1,sr,latn,https://novaekonomija.rs/rss,,yes,no,partial,yes,2026-10-30,Business
+rse,Radio Slobodna Evropa,slobodnaevropa.org,serbian_independent,2,sr,latn,,,yes,no,no,yes,2026-10-30,API feed returned no items
+cenzolovka,Cenzolovka,cenzolovka.rs,serbian_independent,1,sr,latn,https://www.cenzolovka.rs/feed/,,yes,no,no,yes,2026-10-30,Media freedom
+juzne_vesti,Južne vesti,juznevesti.com,serbian_independent,1,sr,latn,https://www.juznevesti.com/feed/,,yes,no,no,yes,2026-10-30,Niš and south
+portal_021,021.rs,021.rs,serbian_independent,1,sr,latn,,,yes,no,no,yes,2026-10-30,Novi Sad; /rss returned 404
+nin,NIN,nin.rs,serbian_independent,1,sr,latn,,https://www.nin.rs/sitemap/news.xml,yes,no,partial,yes,2026-10-30,News sitemap (no titles; slug used until text extraction)
+bloomberg_adria,Bloomberg Adria,bloombergadria.com,serbian_independent,2,sr,latn,,,yes,no,no,yes,2026-10-30,Group to be confirmed by reviewer; /rss returned 404
+rts,Radio Television of Serbia (RTS),rts.rs,serbian_pro_government,3,sr,cyrl,,,yes,no,no,yes,2026-10-30,Public broadcaster; RSS endpoint unreliable; reviewer to reclassify if editorial line changes after handover
+tanjug,Tanjug,tanjug.rs,serbian_pro_government,3,sr,latn,,,yes,no,no,yes,2026-10-30,State news agency; robots.txt returned 403; Google News headlines only
+politika,Politika,politika.rs,serbian_pro_government,3,sr,cyrl,https://www.politika.rs/rss/,,yes,no,partial,yes,2026-10-30,
+novosti,Večernje novosti,novosti.rs,serbian_pro_government,2,sr,cyrl,https://www.novosti.rs/rss/vesti,,yes,no,no,yes,2026-10-30,
+informer,Informer,informer.rs,serbian_pro_government,2,sr,latn,,https://informer.rs/sitemap/news.xml,yes,no,no,yes,2026-10-30,News sitemap (no titles; slug used until text extraction)
+kurir,Kurir,kurir.rs,serbian_pro_government,2,sr,latn,https://www.kurir.rs/rss,,yes,no,no,yes,2026-10-30,
+blic,Blic,blic.rs,serbian_pro_government,3,sr,latn,https://www.blic.rs/rss/danasnje-vesti,,yes,no,no,yes,2026-10-30,Group disputed; reviewer to confirm
+alo,Alo,alo.rs,serbian_pro_government,2,sr,latn,,https://www.alo.rs/sitemap/google-news-sitemap.xml,yes,no,no,yes,2026-10-30,News sitemap with titles
+b92,B92,b92.net,serbian_pro_government,2,sr,latn,,,yes,no,no,yes,2026-10-30,/rss returned HTML
+pink,RTV Pink,pink.rs,serbian_pro_government,3,sr,latn,,,yes,no,no,yes,2026-10-30,/rss returned HTML
+srbija_danas,Srbija Danas,srbijadanas.com,serbian_pro_government,1,sr,latn,https://www.srbijadanas.com/rss.xml,,yes,no,no,yes,2026-10-30,
+espreso,Espreso,espreso.co.rs,serbian_pro_government,1,sr,latn,https://www.espreso.co.rs/rss,,yes,no,no,yes,2026-10-30,
+reuters,Reuters,reuters.com,international,3,en,latn,,,yes,yes,no,yes,2026-10-30,Sitemap returned 401 (bot wall); Google News headlines only
+ap,Associated Press,apnews.com,international,3,en,latn,,,yes,yes,no,yes,2026-10-30,Sitemap returned 403 (bot wall); Google News headlines only
+bbc,BBC News,bbc.co.uk,international,3,en,latn,https://feeds.bbci.co.uk/news/world/europe/rss.xml,,yes,yes,no,yes,2026-10-30,Europe feed
+guardian,The Guardian,theguardian.com,international,3,en,latn,https://www.theguardian.com/world/serbia/rss,,yes,no,no,yes,2026-10-30,Serbia tag feed
+ft,Financial Times,ft.com,international,3,en,latn,,,yes,yes,yes,yes,,Paywall: headline and free text only
+bloomberg,Bloomberg,bloomberg.com,international,3,en,latn,,https://www.bloomberg.com/sitemaps/news/latest.xml,yes,yes,yes,yes,2026-10-30,Global news sitemap; keyword filter; paywall: headline and free text only
+rferl,Radio Free Europe/Radio Liberty,rferl.org,international,3,en,latn,,,yes,yes,no,yes,2026-10-30,API feed returned no items
+dw,Deutsche Welle (English),dw.com,international,3,en,latn,https://rss.dw.com/rdf/rss-en-all,,yes,yes,no,yes,2026-10-30,All-news feed; keyword filter
+politico_eu,Politico Europe,politico.eu,international,2,en,latn,https://www.politico.eu/feed/,,yes,yes,partial,yes,2026-10-30,
+euractiv,Euractiv,euractiv.com,international,2,en,latn,,,yes,yes,no,yes,2026-10-30,Feed returned 403; do not retry; Google News only
+balkan_insight,Balkan Insight,balkaninsight.com,international,2,en,latn,https://balkaninsight.com/feed/,,yes,yes,no,yes,2026-10-30,BIRN English; regional
+ewb,European Western Balkans,europeanwesternbalkans.com,international,1,en,latn,https://europeanwesternbalkans.com/feed/,,yes,yes,no,yes,2026-10-30,
+intellinews,bne IntelliNews,intellinews.com,international,1,en,latn,https://www.intellinews.com/feed/,,yes,yes,yes,yes,2026-10-30,Paywall: headline and free text only
+naslovi,Naslovi.net,naslovi.net,aggregator,1,sr,latn,https://www.naslovi.net/rss,,no,no,no,yes,2026-10-30,Credit the original outlet when known
+google_news,Google News,news.google.com,aggregator,1,sr,mixed,,,no,no,no,yes,2026-10-30,Collection mechanism; items credited to the original outlet after link decoding

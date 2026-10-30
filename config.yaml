@@ -73,8 +73,9 @@ collection:
   serbia_keywords: [Serbia, Serbian, Belgrade, Vučić, Vucic, Novi Sad, Srbija, Beograd]
 
 grouping:
-  title_similarity_threshold: 85   # rapidfuzz token_set_ratio, 0-100
+  title_similarity_threshold: 85   # rapidfuzz token_sort_ratio on Latin-script keys, 0-100
   window_hours: 48
+  min_title_words: 4   # shorter titles (e.g. "Saopštenje") are never grouped
 
 coding:
   model_env: OPENAI_MODEL

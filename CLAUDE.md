@@ -66,6 +66,13 @@ the handover (e.g. Ivica Dačić caretaker interior minister).
   merge or split threads.
 - **Paywalls:** keep the headline and any free text, set `text_status = partial`. Never try
   to get around paywalls or consent walls.
+- **Collection routes (decided 30 Oct):** per outlet, RSS first, then the outlet's news
+  sitemap, then a Google News `site:` search only when it has neither. Google News keyword
+  searches add discovery. Google News links are **not decoded**: from the EU, Google shows a
+  consent page, so a Google item is matched by title to a direct copy from the same outlet
+  and dropped if found; otherwise it is kept as a headline-only row (`text_route =
+  headline_only`) linking to Google News. Sites that answer 401/403 to the collector (AP,
+  Reuters, Tanjug as of 30 Oct) are reached only through Google News headlines.
 - **Spend caps:** a budget alert on the AI provider account, the spending limit in the X
   developer console, Apify's prepaid usage. When a cap is hit the collector stops and the
   method notes on the page say so.
@@ -159,7 +166,7 @@ safely: it skips items already done.
 
 | Script | Does | Writes |
 |---|---|---|
-| `1_collect_press.py` | RSS and Google News per outlet group and language, date filter, link decoding, story grouping | `data/links.csv` |
+| `1_collect_press.py` | RSS, news sitemaps and Google News per outlet and language, date filter, crediting to the original outlet, story grouping | `data/links.csv` |
 | `2_extract_text.py` | Fetch pages, extract text (trafilatura), detect junk and language | `data/articles.csv` |
 | `3_code_stories.py` | AI coding against the codebook, structured outputs, one row per story; then computes severity from the story group and assigns `thread_id` | `data/coded.jsonl` |
 | `4_draft_brief.py` | Daily brief and alert focus box from the day's coded stories, stronger model, cites story ids | `review/brief_YYYY-MM-DD.md` |
@@ -258,7 +265,7 @@ The same gate applies to the weekly digest.
 ## Repository layout
 
 ```
-CLAUDE.md  README.md  .gitignore  config.yaml  config.py  outlets.csv  actors.csv
+CLAUDE.md  README.md  .gitignore  config.yaml  config.py  http_client.py  outlets.csv  actors.csv
 codebook.md  codebook.py  validation_report.md
 1_collect_press.py  2_extract_text.py  3_code_stories.py  4_draft_brief.py
 5_build_trackers.py  6_export_for_web.py  7_export_pdf.py  8_collect_social.py
@@ -283,7 +290,8 @@ Working days from Monday 2 November 2026. Tick items as they are done and add th
 - [x] Repository, `.devcontainer`, `requirements.txt`, `.gitignore` (`data/`, `review/`, `exports/`, `.env`, `ExecutiveBriefings/`) — 30 Oct
 - [x] `config.yaml`, `config.py`, `outlets.csv` (Serbian independent, Serbian pro-government, official, international), `actors.csv` seeded from scratch (parties, institutions, officials in the first week's coverage) — 30 Oct (actors have `status: seed` until a reviewer signs the list off; `project.contact_email` must be set before collecting)
 - [x] `codebook.md` v0.1 and `codebook.py` with the schema above — 30 Oct (v0.1.0; severity rule and actor-id check in `codebook.py`; `tests/test_codebook.py` keeps the two files in sync)
-- [ ] `1_collect_press.py`, `2_extract_text.py` written from scratch with Serbian sources and story grouping (Google News links need decoding to the original URL; keep the decoder isolated and tested, as Google changes the format)
+- [x] `1_collect_press.py` written from scratch with Serbian sources and story grouping — 30 Oct (first live run: ~2,500 links, ~2,200 stories, 85 s; shared polite client in `http_client.py`)
+- [ ] `2_extract_text.py` written from scratch
 - [ ] `3_code_stories.py` with structured outputs, script-computed severity and `thread_id`; coded 30 stories and eyeballed them
 - [ ] First `ExecutiveBriefings/` stories hand-coded into `data/validation/` as the early sample
 - [ ] `4_draft_brief.py` producing the brief and the alert focus box with story ids

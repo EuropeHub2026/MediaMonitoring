@@ -1,0 +1,7 @@
+outlet_id,name,domain,outlet_group,reach_tier,language,script,rss_url,sitemap_url,google_news,needs_keyword_filter,paywall,active,feed_checked,notes
+n1,N1 Serbia,n1info.rs,serbian_independent,3,sr,latn,https://n1info.rs/feed/,,yes,no,no,yes,,
+alo,Alo,alo.rs,serbian_pro_government,2,sr,latn,,https://www.alo.rs/sitemap/news.xml,yes,no,no,yes,,
+tanjug,Tanjug,tanjug.rs,serbian_pro_government,3,sr,latn,,,yes,no,no,yes,,
+guardian,The Guardian,theguardian.com,international,3,en,latn,https://www.theguardian.com/feed,,yes,yes,no,yes,,
+inactive,Inactive,inactive.example,serbian_independent,1,sr,latn,https://inactive.example/feed,,no,no,no,no,,
+google_news,Google News,news.google.com,aggregator,1,sr,mixed,,,no,no,no,yes,,

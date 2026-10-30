@@ -106,10 +106,11 @@ def setup_logging(script_name: str, cfg: dict[str, Any] | None = None) -> loggin
         log_dir = path(cfg, "log_dir")
         log_dir.mkdir(parents=True, exist_ok=True)
         handlers.append(logging.FileHandler(log_dir / f"{script_name}.log", encoding="utf-8"))
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        handlers=handlers,
-        force=True,
-    )
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+    if cfg is not None:
+        zone = tz(cfg)
+        formatter.converter = lambda secs: datetime.fromtimestamp(secs, zone).timetuple()
+    for handler in handlers:
+        handler.setFormatter(formatter)
+    logging.basicConfig(level=logging.INFO, handlers=handlers, force=True)
     return logging.getLogger(script_name)
