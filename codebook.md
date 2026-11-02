@@ -1,6 +1,6 @@
 # Codebook
 
-**Version 0.1.1** (30 Oct 2026). Prompt version 0.1.0. Triage prompt version 0.1.0.
+**Version 0.1.3** (2 Nov 2026). Prompt version 0.1.2. Triage prompt version 0.1.0.
 
 This is the plain-English codebook for the Serbia Post-Election Monitor. `codebook.py`
 holds the same lists, the `Extraction` schema and the prompt. Keep the two in sync and
@@ -39,10 +39,10 @@ have their text extracted and coded.
 
 | Field | Values | Notes |
 |---|---|---|
-| `relevant` | yes / no | Yes only if the story concerns state-level political change in Serbia since the 25 Oct 2026 election. |
-| `category` | one category below | `background` if relevant but no alert category fits. Irrelevant stories are `background`. |
+| `relevant` | yes / no | Yes if the story concerns state-level political change in Serbia since the 25 Oct 2026 election, or a state-level matter in an alert category. The article need not mention the election or transition. Headline-only stories are judged on the headline; missing detail is not a reason for no. |
+| `category` | one category below | `background` only if relevant and no alert category fits; `transition_milestone` is for news that a formal step just happened or was officially scheduled; commentary on the outcome with no new formal step is `background`. Irrelevant stories are `background`. |
 | `secondary_category` | one alert category, or empty | Only when the story clearly carries two, and never the same as `category`. |
-| `top_tier` | yes / no | Does the story involve a top-tier post or body (list below)? |
+| `top_tier` | yes / no | Is a current holder of a top-tier post, or a top-tier body (list below), a subject of the main development? No for mere mentions and former holders. |
 | `article_type` | see below | |
 | `actors` | actor ids from `actors.csv` | Only listed actors. New names go in entity rows with `proposed: true`. |
 | `summary` | two sentences | |
@@ -50,7 +50,9 @@ have their text extracted and coded.
 | `evidence_quote` | ≤ 25 words, original language | The passage that supports the category. Never published. |
 
 Not relevant (examples): household statistics, consumer trends, company news with no state
-or transition angle, sport and culture unless tied to the transition.
+or transition angle, sport and culture unless tied to the transition, local matters with no
+national angle (a school, a municipal utility), foreign events with no Serbian state angle,
+routine government business.
 
 ## Article-level fields (from collection, not the model)
 
@@ -199,3 +201,5 @@ when someone leaves a post: update `role` and `as_of`.
 |---|---|---|---|
 | 0.1.0 | 30 Oct 2026 | First version. | No hand-coded sample yet. |
 | 0.1.1 | 30 Oct 2026 | Added headline triage (schema and prompt); story-level definitions unchanged. | No hand-coded sample yet. |
+| 0.1.2 | 2 Nov 2026 | Widened `relevant`: state-level alert-category matters count without an explicit election link; headline-only stories judged on the headline; `background` narrowed. Prompt 0.1.1. | No hand-coded sample yet, so no `10_validate.py` numbers. Informal check on the 15 of 30 stories rejected under 0.1.0: 9 now relevant. |
+| 0.1.3 | 2 Nov 2026 | `transition_milestone` limited to news of a new formal step, commentary on the outcome is `background`; `top_tier` limited to current holders who are a subject of the main development. Prompt 0.1.2. | No `10_validate.py` yet. Provisional check against 30 Claude-coded stories (not reviewer codes), 12 English and 18 Serbian: category 63% to 80%, `top_tier` 77% to 90%, `relevant` 90% unchanged. The fixes were designed on this same sample. |

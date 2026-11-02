@@ -44,6 +44,21 @@ def test_returns_parsed_and_model(cfg: dict) -> None:
     assert "temperature" not in client.kwargs
 
 
+def test_usage_logged(caplog: pytest.LogCaptureFixture) -> None:
+    usage = SimpleNamespace(input_tokens=100, output_tokens=50,
+                            input_tokens_details=SimpleNamespace(cached_tokens=10),
+                            output_tokens_details=SimpleNamespace(reasoning_tokens=20))
+    with caplog.at_level("INFO", logger="ai_client"):
+        ai_client.log_usage("test-model", SimpleNamespace(usage=usage))
+    assert "usage model=test-model input=100 cached=10 output=50 reasoning=20" in caplog.text
+
+
+def test_response_without_usage_logs_nothing(caplog: pytest.LogCaptureFixture) -> None:
+    with caplog.at_level("INFO", logger="ai_client"):
+        ai_client.log_usage("test-model", SimpleNamespace())
+    assert not caplog.text
+
+
 def test_temperature_passed_when_set(cfg: dict) -> None:
     cfg["coding"]["temperature"] = 0
     client = Client(result=codebook.TriageBatch(items=[]))

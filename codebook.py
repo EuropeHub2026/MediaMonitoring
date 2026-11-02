@@ -14,8 +14,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-CODEBOOK_VERSION = "0.1.1"
-PROMPT_VERSION = "0.1.0"
+CODEBOOK_VERSION = "0.1.3"
+PROMPT_VERSION = "0.1.2"
 TRIAGE_PROMPT_VERSION = "0.1.0"
 
 MAX_ENTITIES = 5
@@ -126,10 +126,10 @@ class Extraction(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    relevant: bool = Field(description="True if the story concerns state-level political change in Serbia after the 25 Oct 2026 election.")
+    relevant: bool = Field(description="True if the story concerns state-level political change in Serbia after the 25 Oct 2026 election, or a state-level matter in an alert category, even if the article does not mention the election or transition.")
     category: Category
     secondary_category: AlertCategory | None = Field(description="A second, different alert category if the story clearly carries two; otherwise null.")
-    top_tier: bool = Field(description="True if the story involves a top-tier post holder or body.")
+    top_tier: bool = Field(description="True if a current top-tier post holder or body is a subject of the main development; not for mere mentions or former holders.")
     article_type: ArticleType
     actors: list[str] = Field(description="actor_ids from the actor list that the story is about.")
     entities: list[EntityRow] = Field(description="0 to 5 rows.")
@@ -263,14 +263,15 @@ Rules:
 - Always answer in English, except evidence_quote, which is copied verbatim from the article in its original language (at most {MAX_QUOTE_WORDS} words).
 - Accusations are recorded with who made them (by_whom) and the accused party's reply (response).
 
-relevant: true only if the story concerns state-level political change in Serbia since the election (posts, institutions, prosecutions, the transition, protests, foreign reactions, state business decisions, economic stability linked to the transition). Otherwise false, category "background", no secondary_category, no entities.
+relevant: true if the story concerns state-level political change in Serbia since the election (posts, institutions, prosecutions, the transition, protests, foreign reactions, state business decisions, economic stability), or any state-level matter that fits an alert category. The article does not have to mention the election or the transition: a national state body, state company, senior official, national prosecution or strategic company such as NIS is enough. A headline-only story is judged on what the headline says; missing detail is not a reason for false. False for local matters with no national angle (a school, a municipal utility), foreign events with no Serbian state angle, and routine government business. If false: category "background", no secondary_category, no entities.
+category: use "background" only if no alert category fits. transition_milestone is for news that a formal step has just happened or been officially scheduled (results published by RIK, a rerun ordered, parliament constituted). Commentary, analysis or retrospectives that discuss the election outcome without reporting a new formal step are background.
 
 category (choose one):
 {_bullets(CATEGORY_DEFINITIONS)}
 
 secondary_category: a second, different alert category only when the story clearly carries two; otherwise null.
 
-top_tier: true if the story involves any of these posts or bodies:
+top_tier: true only if a current holder of one of these posts, or one of these bodies, is a subject of the story's main development. False if the story merely mentions them, or concerns a former holder (for example Aleksandar Vučić, who is no longer president). Posts and bodies:
 {top_tier}
 
 article_type:

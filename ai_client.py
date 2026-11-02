@@ -42,6 +42,17 @@ def make_client() -> openai.OpenAI:
     return openai.OpenAI(api_key=config.get_secret("OPENAI_API_KEY"), max_retries=2)
 
 
+def log_usage(model: str, response: Any) -> None:
+    """Log the tokens one response used, so real costs can be read from the logs."""
+    usage = getattr(response, "usage", None)
+    if usage is None:
+        return
+    cached = getattr(getattr(usage, "input_tokens_details", None), "cached_tokens", 0)
+    reasoning = getattr(getattr(usage, "output_tokens_details", None), "reasoning_tokens", 0)
+    log.info("usage model=%s input=%s cached=%s output=%s reasoning=%s",
+             model, usage.input_tokens, cached, usage.output_tokens, reasoning)
+
+
 def parse_structured(
     cfg: dict[str, Any],
     client: Any,
@@ -73,6 +84,7 @@ def parse_structured(
         raise AIError(str(exc)) from exc
     except ValueError as exc:   # pydantic validation of the model's output
         raise AIError(f"output did not validate: {exc}") from exc
+    log_usage(model, response)
     parsed = getattr(response, "output_parsed", None)
     if parsed is None:
         raise AIError("no parsed output (refusal or empty response)")
