@@ -26,12 +26,15 @@ navigate the transition without reading Serbian media. Each morning they need:
    approval.
 
 Context the codebook assumes (these change; never hard-code them in scripts; last checked
-30 Oct 2026): the final CeSID/Ipsos projection gives the Student List 141 of 250 seats,
-"Aleksandar Vučić – United Serbia" (SNS-led) 103, and minority lists 6 (SVM 2, Albanian
-Coalition 2, Ljajić 1, SDA 1); Vučić resigned the presidency on 27 September to run for
+2 Nov 2026 from collected headlines and coded stories, not yet reviewer-confirmed): after
+the 1 November rerun RIK published results from all 8,392 polling stations, Student List
+53.01%, United Serbia 38.98%, turnout 68.89%; RIK's overall report and the seat allocation
+are still due; CRTA projects the Student List at 140 seats after the rerun and Zukorlić's
+SPP says it won one seat, so the earlier projection is superseded (CeSID/Ipsos: Student
+List 141 of 250, "Aleksandar Vučić – United Serbia" (SNS-led) 103, minority lists 6);
+national minority council elections are on 8 November; Vučić resigned the presidency on 27 September to run for
 prime minister; Ana Brnabić, as Speaker of Parliament, is acting president and is under
-pressure to call the presidential election; a rerun at 53 polling stations (24,438
-voters) is due on 1 November before RIK declares final results; a presidential election
+pressure to call the presidential election; a presidential election
 is due by 26 December 2026; the outgoing authorities stay in control as caretakers until
 the handover (e.g. Ivica Dačić caretaker interior minister).
 
@@ -276,6 +279,7 @@ codebook.md  codebook.py  validation_report.md
 1_collect_press.py  2_extract_text.py  3_code_stories.py  4_draft_brief.py
 5_build_trackers.py  6_export_for_web.py  7_export_pdf.py  8_collect_social.py
 9_social_trends.py  10_validate.py  11_weekly_digest.py  run_morning.py  publish.py
+web/        index.html template, copied to docs/ by publish.py
 .devcontainer/  devcontainer.json
 .github/workflows/  morning.yml                      (stage 6)
 docs/       index.html, data.js                      (public)
@@ -297,12 +301,12 @@ Working days from Monday 2 November 2026. Tick items as they are done and add th
 - [x] `config.yaml`, `config.py`, `outlets.csv` (Serbian independent, Serbian pro-government, official, international), `actors.csv` seeded from scratch (parties, institutions, officials in the first week's coverage) — 30 Oct (actors have `status: seed` until a reviewer signs the list off; `project.contact_email` must be set before collecting)
 - [x] `codebook.md` v0.1 and `codebook.py` with the schema above — 30 Oct (v0.1.0; severity rule and actor-id check in `codebook.py`; `tests/test_codebook.py` keeps the two files in sync)
 - [x] `1_collect_press.py` written from scratch with Serbian sources and story grouping — 30 Oct (first live run: ~2,500 links, ~2,200 stories, 85 s; shared polite client in `http_client.py`)
-- [x] `2_extract_text.py` written from scratch — 30 Oct (headline triage before fetching, decided 30 Oct to keep coding volume within budget; live text test 39/40 full; triage not yet run live: needs `OPENAI_API_KEY` and `OPENAI_MODEL`)
-- [ ] `3_code_stories.py` with structured outputs, script-computed severity and `thread_id`; coded 30 stories and eyeballed them
-  - 30 Oct: script built and tested with mocks (most-reported stories first; actor ids corrected and logged; severity refreshed when copies arrive; readable `data/coding_check.md`). Live 30-story run pending the API key.
+- [x] `2_extract_text.py` written from scratch — 30 Oct (headline triage before fetching, decided 30 Oct to keep coding volume within budget; live text test 39/40 full; first live triage 2 Nov: 5,701 stories, 2,157 passed, 38%)
+- [x] `3_code_stories.py` with structured outputs, script-computed severity and `thread_id`; coded 30 stories and eyeballed them — 2 Nov (0 failed; real cost about $0.004 a story, token use now logged by `ai_client.py`; `relevant` was too narrow and was widened in prompt 0.1.1 / codebook 0.1.2: no hand-coded sample existed, so no `10_validate.py` numbers; informal before/after on the 15 rejected stories: 9 flipped to relevant, including NIS/OFAC. Not reviewer-checked. Open issue: same event under different headlines splits into several `story_id`s, so severity differs between them, e.g. RIK results at 3 and 1)
 - [ ] First `ExecutiveBriefings/` stories hand-coded into `data/validation/` as the early sample
-- [ ] `4_draft_brief.py` producing the brief and the alert focus box with story ids
-- [ ] `publish.py` with the approval gate; `6_export_for_web.py`; `docs/index.html` with the focus box, brief and method notes
+  - 2 Nov: not done from the newsletters. As a stopgap Claude coded 30 randomly drawn collected stories from excerpts (`data/validation/hand_codes_claude.csv`), which is not independent validation. Prompt 0.1.2 / codebook 0.1.3 scored category 80%, `top_tier` 90%, `relevant` 90% against them (before: 63%, 77%, 90%), on the sample the fixes were designed from. The 30 coded stories in `data/coded.jsonl` predate these versions and need recoding. A reviewer still needs to check these codes.
+- [x] `4_draft_brief.py` producing the brief and the alert focus box with story ids — 2 Nov (stories consolidated by thread; the model writes and merges focus lines, severity and rank stay script-computed across the cited stories; 396 coded, 4 failed on the 25-word quote limit and retry next run; first draft in `review/brief_2026-11-02.md`, numbers and names traced to sources)
+- [x] `publish.py` with the approval gate; `6_export_for_web.py`; `docs/index.html` with the focus box, brief and method notes — 2 Nov (template in `web/index.html`, copied to `docs/` by `publish.py` so nothing reaches `docs/` before approval; `publish.py` also refuses if an evidence quote reaches the page data; script parses, not yet seen in a browser)
 - [ ] GitHub Pages enabled; first approved brief on the page
 
 Done when: a reviewer has approved one real morning brief and it is visible at the Pages URL.

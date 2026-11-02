@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Serbia Post-Election Monitor</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root {
+  --ground: #eef2f4; --surface: #fff; --ink: #15252e; --muted: #566b76; --line: #cfd9de;
+  --accent: #0f5e73; --sev3: #b3261e; --sev2: #a85d00; --sev1: #566b76;
+  --display: "Bricolage Grotesque", "Trebuchet MS", sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root { color-scheme: dark; --ground: #0f1a20; --surface: #17252c; --ink: #e6eef1; --muted: #9db0ba;
+    --line: #2d414b; --accent: #6cc3da; --sev3: #ff8f85; --sev2: #f0b35a; --sev1: #9db0ba; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 16px/1.55 var(--body); padding: 28px 16px 56px; }
+main { max-width: 780px; margin-inline: auto; display: grid; gap: 30px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(1.7rem, 5vw, 2.3rem); } h2 { font-size: 1.3rem; } h3 { font-size: 1.08rem; font-weight: 500; }
+p { margin: 0; } a { color: var(--accent); }
+.stamp { font: .78rem var(--data); color: var(--muted); }
+header, section, article { display: grid; gap: 10px; }
+header { padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.notice { background: var(--surface); border: 1px solid var(--line); padding: 12px 14px; }
+.focus { background: var(--surface); border: 1px solid var(--line); padding: clamp(14px, 3vw, 22px); }
+.focus ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.focus li { display: grid; grid-template-columns: 4.4em 1fr; gap: 12px; align-items: baseline; }
+.focus li > div { display: grid; gap: 3px; min-width: 0; }
+.sev { font: 500 .74rem var(--data); border: 1px solid currentColor; padding: 1px 5px; text-align: center; }
+.s3 { color: var(--sev3); } .s2 { color: var(--sev2); } .s1 { color: var(--sev1); }
+article { padding-top: 16px; border-top: 1px solid var(--line); }
+.why b { font-weight: 600; }
+.src { font-size: .84rem; color: var(--muted); overflow-wrap: anywhere; }
+select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); padding: 6px 8px; max-width: 100%; }
+label { font-size: .88rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+dl { margin: 0; display: grid; gap: 8px; } dt { font-weight: 600; } dd { margin: 0; color: var(--muted); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<main id="app"><h1>Serbia Post-Election Monitor</h1><p>This page needs its data file.</p></main>
+<script src="data.js"></script>
+<script>
+(function () {
+  var data = window.SITE_DATA;
+  var app = document.getElementById("app");
+  if (!data || !data.briefs || !data.briefs.length) return;
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+  function sourcesLine(list) {
+    var line = el("p", "src", "Sources: ");
+    list.filter(function (s) { return /^https?:\/\//.test(s.url); }).forEach(function (s, i) {
+      if (i) line.append(" · ");
+      var a = el("a", "", s.name);
+      a.href = s.url; a.rel = "noopener noreferrer"; a.target = "_blank";
+      line.append(a);
+    });
+    return line;
+  }
+  function today() {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: data.timezone }).format(new Date());
+  }
+  function longDate(iso) {
+    return new Date(iso + "T12:00:00Z").toLocaleDateString("en-GB",
+      { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+  }
+  function label(category) { return category.replace(/_/g, " "); }
+
+  function focusPanel(brief) {
+    var box = el("section", "focus");
+    box.append(el("h2", "", "Alert focus box"));
+    if (!brief.focus.length) { box.append(el("p", "", "No alert items since the previous brief.")); return box; }
+    var list = el("ul");
+    brief.focus.forEach(function (item) {
+      var row = el("li"), body = el("div");
+      row.append(el("span", "sev s" + item.severity, "SEV " + item.severity));
+      body.append(el("p", "", item.text), el("p", "src", item.categories.map(label).join(", ")), sourcesLine(item.sources));
+      row.append(body); list.append(row);
+    });
+    box.append(list);
+    return box;
+  }
+  function briefPanel(brief) {
+    var section = el("section");
+    section.append(el("h2", "", "Daily brief"));
+    brief.items.forEach(function (item) {
+      var art = el("article");
+      art.append(el("h3", "", item.headline));
+      item.paragraphs.forEach(function (p) { art.append(el("p", "", p)); });
+      var why = el("p", "why"); why.append(el("b", "", "Why it matters: "), item.why);
+      art.append(why, sourcesLine(item.sources));
+      section.append(art);
+    });
+    return section;
+  }
+  function methodPanel() {
+    var m = data.method, section = el("section"), dl = el("dl");
+    section.append(el("h2", "", "Method notes"));
+    function add(term, text) { dl.append(el("dt", "", term), el("dd", "", text)); }
+    add("How this is made", "Press reports are collected daily, coded by AI against a fixed codebook and drafted into a brief. A team reviewer approves every brief before it appears here.");
+    add("Sources", Object.keys(m.outlets_by_group).map(function (g) { return label(g) + ": " + m.outlets_by_group[g]; }).join("; "));
+    add("Severity", "1: reported by one outlet group. 2: two or more groups, or an official outlet. 3: meets 2 and involves a top-tier post.");
+    add("Codebook", "Version " + m.codebook_version + ", prompt " + m.prompt_version);
+    add("Validation", m.validation);
+    add("Known gaps", m.known_gaps.join(" "));
+    m.service_notes.forEach(function (n) { add("Service notice", n); });
+    add("Corrections and takedown", m.takedown_contact);
+    section.append(dl);
+    return section;
+  }
+  function show(brief) {
+    var head = el("header");
+    head.append(el("h1", "", "Serbia Post-Election Monitor"),
+      el("p", "stamp", "Brief for " + longDate(brief.date) + " · reviewed by " + brief.reviewed_by));
+    var nodes = [head];
+    if (brief === data.briefs[0] && brief.date !== today()) {
+      nodes.push(el("p", "notice", "No brief today. The latest approved brief is shown below."));
+    }
+    if (data.briefs.length > 1) {
+      var pick = el("label", "", "Earlier briefs"), select = el("select");
+      select.id = "brief-date";
+      data.briefs.forEach(function (b, i) {
+        var opt = el("option", "", longDate(b.date)); opt.value = String(i);
+        opt.selected = b === brief; select.append(opt);
+      });
+      select.addEventListener("change", function () { show(data.briefs[+select.value]); });
+      pick.append(select); nodes.push(pick);
+    }
+    nodes.push(focusPanel(brief), briefPanel(brief), methodPanel());
+    app.replaceChildren.apply(app, nodes);
+  }
+  show(data.briefs[0]);
+})();
+</script>
+</body>
+</html>
