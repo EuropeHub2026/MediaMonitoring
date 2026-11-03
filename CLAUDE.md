@@ -324,7 +324,7 @@ Done when: a reviewer has approved one real morning brief and it is visible at t
 
 - 3 Nov, added at the team's request: media-independence strand. `actors.csv` gains Nova (daily), Radar, ANN, Alpac Capital, the Nova/Radar union, UNS, Jovan Memedović and Olivera Kovačević (`status: confirmed`); Student List aliases extended. `outlets.csv` gains the Student List site and UNS as `primary_nonstate`. Codebook 0.2.0 / prompt 0.2.0: `stage` field, `sued` action, media decisions in scope (numbers in the `codebook.md` change log). Stories coded before 0.2.0 have no `stage` and should be recoded before `5_build_trackers.py` relies on it.
 
-- [ ] `5_build_trackers.py`: resignation and dismissal tracker, emerging leaders, transition timeline from entity rows
+- [x] `5_build_trackers.py`: resignation and dismissal tracker, emerging leaders, transition timeline from entity rows — 3 Nov (all coded rows recoded to 0.2.0 first via `3_code_stories.py --recode-stale`; `--since` codes the next brief's window before the backlog, about 1,900 older triaged stories still uncoded. Proposed names go to `pending_review` in `trackers.json`, never into a tracker; entries carry the actor's `seed`/`confirmed` status. Open: whether seed actors may appear on the page before sign-off; emerging leaders ranks by coverage growth and so includes incumbents; the prior-week comparison is empty until about 9 Nov. Not yet on the page.)
 - [ ] Article list panel with search and filters (category, actor, outlet group, date)
 - [ ] Method notes panel: sources, codebook version, known gaps, takedown contact
 - [ ] Page checked at phone width and in dark mode
