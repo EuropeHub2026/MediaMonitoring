@@ -40,6 +40,20 @@ article { padding-top: 16px; border-top: 1px solid var(--line); }
 select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); padding: 6px 8px; max-width: 100%; }
 label { font-size: .88rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 dl { margin: 0; display: grid; gap: 8px; } dt { font-weight: 600; } dd { margin: 0; color: var(--muted); }
+.tracker { display: grid; gap: 14px; }
+.tracker > p.note { font-size: .88rem; color: var(--muted); }
+.entry { display: grid; gap: 4px; padding-top: 12px; border-top: 1px solid var(--line); }
+.entry h3 { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.entry .meta { font: .78rem var(--data); color: var(--muted); }
+.tag { font: 500 .72rem var(--data); color: var(--muted); border: 1px solid var(--line); padding: 0 5px; }
+.group-title { font: 600 .8rem var(--data); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-top: 6px; }
+details summary { cursor: pointer; font-size: .86rem; color: var(--accent); }
+details ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 6px; font-size: .86rem; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { text-align: left; padding: 7px 6px; border-top: 1px solid var(--line); vertical-align: top; }
+th { font: 500 .74rem var(--data); color: var(--muted); text-transform: uppercase; letter-spacing: .05em; border-top: 0; }
+td.num { font-family: var(--data); text-align: right; white-space: nowrap; }
+.role { display: block; font-size: .8rem; color: var(--muted); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 </style>
 </head>
@@ -104,6 +118,121 @@ dl { margin: 0; display: grid; gap: 8px; } dt { font-weight: 600; } dd { margin:
     });
     return section;
   }
+  var T = data.trackers;
+  function shortDate(iso) {
+    return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: data.timezone });
+  }
+  function link(src) {
+    var a = el("a", "", src.outlet);
+    a.href = src.url; a.rel = "noopener noreferrer"; a.target = "_blank";
+    return a;
+  }
+  function trailLine(list, max) {
+    var line = el("p", "src", "Sources: ");
+    list.filter(function (s) { return /^https?:\/\//.test(s.url); }).slice(0, max).forEach(function (s, i) {
+      if (i) line.append(" · ");
+      line.append(link(s));
+    });
+    if (list.length > max) line.append(" · and " + (list.length - max) + " more");
+    return line;
+  }
+  function trackerHead(title, intro) {
+    var section = el("section", "tracker");
+    section.append(el("h2", "", title), el("p", "note", intro));
+    return section;
+  }
+  function mixed(list) {
+    return list.some(function (e) { return e.unconfirmed; }) && list.some(function (e) { return !e.unconfirmed; });
+  }
+  function unconfirmedNote(section, list) {
+    if (!list.some(function (e) { return e.unconfirmed; })) return;
+    section.append(el("p", "note", mixed(list)
+      ? "Names marked “unconfirmed” come from the starting actor list, which a reviewer has not yet signed off."
+      : "Names come from the starting actor list, which a reviewer has not yet signed off."));
+  }
+  function nameHeading(entry, sev, list) {
+    var h = el("h3", "", entry.name);
+    if (sev) h.append(el("span", "sev s" + sev, "SEV " + sev));
+    if (entry.unconfirmed && mixed(list)) h.append(el("span", "tag", "unconfirmed"));
+    return h;
+  }
+  var ACTION = { called_to_resign: "called to resign", dismissal_demanded: "dismissal demanded",
+    resigned: "resigned", dismissed: "dismissed", suspended: "suspended" };
+  var STATUS = [["gone", "Gone"], ["suspended", "Suspended"], ["departure_announced", "Departure announced"],
+    ["called_to_resign", "Called to resign or dismissal demanded"]];
+
+  function timelinePanel() {
+    if (!T.transition_timeline.length) return null;
+    var section = trackerHead("Transition timeline",
+      "Milestones in the transfer of power, newest first. Severity is computed across every outlet that reported the milestone.");
+    T.transition_timeline.slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; }).forEach(function (m) {
+      var entry = el("div", "entry"), h = el("h3", "", shortDate(m.date));
+      h.append(el("span", "sev s" + m.severity, "SEV " + m.severity));
+      if (m.announced_only) h.append(el("span", "tag", "announced, not yet done"));
+      var why = el("p", "why"); why.append(el("b", "", "Why it matters: "), m.why_it_matters);
+      entry.append(h, el("p", "", m.summary), why, trailLine(m.sources, 4));
+      section.append(entry);
+    });
+    return section;
+  }
+  function resignationPanel() {
+    if (!T.resignations.length) return null;
+    var section = trackerHead("Resignation and dismissal tracker",
+      "People and bodies publicly called to resign or reported as having gone, with who made the call. Recorded as the press reported them.");
+    unconfirmedNote(section, T.resignations);
+    STATUS.forEach(function (st) {
+      var group = T.resignations.filter(function (e) { return e.status === st[0]; });
+      if (!group.length) return;
+      section.append(el("p", "group-title", st[1]));
+      group.forEach(function (e) {
+        var entry = el("div", "entry"), last = e.events[e.events.length - 1];
+        entry.append(nameHeading(e, e.max_severity, T.resignations), el("p", "meta", e.role));
+        if (e.called_by.length) entry.append(el("p", "", "Called for by: " + e.called_by.join("; ")));
+        var details = el("details"), list = el("ul");
+        details.append(el("summary", "", e.events.length + " report" + (e.events.length > 1 ? "s" : "") + ", latest " + shortDate(last.published)));
+        e.events.slice().reverse().forEach(function (ev) {
+          var li = el("li"), parts = [shortDate(ev.published), ACTION[ev.action] || ev.action];
+          if (ev.stage === "announced") parts.push("announced");
+          if (ev.by_whom) parts.push("by " + ev.by_whom);
+          li.append(parts.join(" · ") + " · ", link(ev));
+          if (ev.response) li.append(el("span", "role", "Response: " + ev.response));
+          list.append(li);
+        });
+        details.append(list); entry.append(details);
+        section.append(entry);
+      });
+    });
+    return section;
+  }
+  function tone(e) {
+    if (e.mean_stance === null || e.stance_rows < 5) return "too few reports";
+    var v = e.mean_stance;
+    return (v <= -1 ? "mostly critical" : v < -0.3 ? "leaning critical" : v < 0.3 ? "mixed or neutral" : v < 1 ? "leaning favourable" : "mostly favourable") + " (" + v.toFixed(1) + ")";
+  }
+  function leadersPanel() {
+    if (!T.emerging_leaders.length) return null;
+    var hasPrior = T.emerging_leaders.some(function (e) { return e.stories_prior > 0; });
+    var section = trackerHead("Emerging leaders",
+      "People ranked by growth in coverage over the last " + T.window_days + " days against the " + T.window_days + " before. Tone is the average stance of reports towards the person, from −2 to +2." +
+      (hasPrior ? "" : " Collection began recently, so there is no earlier period yet and the ranking shows coverage only; incumbents appear alongside newcomers."));
+    unconfirmedNote(section, T.emerging_leaders);
+    var table = el("table"), head = el("tr");
+    ["Name", "Stories", "Before", "Tone"].forEach(function (t) { head.append(el("th", "", t)); });
+    table.append(head);
+    T.emerging_leaders.slice(0, 12).forEach(function (e) {
+      var row = el("tr"), name = el("td", "", e.name);
+      if (e.unconfirmed && mixed(T.emerging_leaders)) { name.append(" "); name.append(el("span", "tag", "unconfirmed")); }
+      name.append(el("span", "role", e.role));
+      row.append(name, el("td", "num", String(e.stories_recent)), el("td", "num", String(e.stories_prior)), el("td", "", tone(e)));
+      table.append(row);
+    });
+    section.append(table);
+    return section;
+  }
+  function trackerPanels() {
+    if (!T) return [];
+    return [timelinePanel(), resignationPanel(), leadersPanel()].filter(Boolean);
+  }
   function methodPanel() {
     var m = data.method, section = el("section"), dl = el("dl");
     section.append(el("h2", "", "Method notes"));
@@ -112,6 +241,7 @@ dl { margin: 0; display: grid; gap: 8px; } dt { font-weight: 600; } dd { margin:
     add("Sources", Object.keys(m.outlets_by_group).map(function (g) { return label(g) + ": " + m.outlets_by_group[g]; }).join("; "));
     add("Severity", "1: reported by one outlet group. 2: two or more groups, or an official outlet. 3: meets 2 and involves a top-tier post.");
     add("Codebook", "Version " + m.codebook_version + ", prompt " + m.prompt_version);
+    if (T) add("Trackers", "Built from the people, bodies and actions coded in each story, up to the end of the latest approved brief (" + shortDate(T.cutoff) + "). Accusations and calls to resign are attributed; a reported response is shown when there is one.");
     add("Validation", m.validation);
     add("Known gaps", m.known_gaps.join(" "));
     m.service_notes.forEach(function (n) { add("Service notice", n); });
@@ -137,7 +267,9 @@ dl { margin: 0; display: grid; gap: 8px; } dt { font-weight: 600; } dd { margin:
       select.addEventListener("change", function () { show(data.briefs[+select.value]); });
       pick.append(select); nodes.push(pick);
     }
-    nodes.push(focusPanel(brief), briefPanel(brief), methodPanel());
+    nodes.push(focusPanel(brief), briefPanel(brief));
+    nodes.push.apply(nodes, trackerPanels());
+    nodes.push(methodPanel());
     app.replaceChildren.apply(app, nodes);
   }
   show(data.briefs[0]);

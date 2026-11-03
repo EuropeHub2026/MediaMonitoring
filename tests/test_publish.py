@@ -69,7 +69,8 @@ def cfg(tmp_path: Path) -> dict:
             "method": {"validation": "None yet.", "known_gaps": ["A gap."]},
             "paths": {k: str(tmp_path / v) for k, v in {
                 "review_dir": "review", "docs_dir": "docs", "web_template": "web.html",
-                "outlets_csv": "outlets.csv", "status_json": "status.json", "coded_jsonl": "coded.jsonl"}.items()}}
+                "outlets_csv": "outlets.csv", "status_json": "status.json", "coded_jsonl": "coded.jsonl",
+                "trackers_json": "trackers.json", "actors_csv": "actors.csv"}.items()}}
 
 
 def write_brief(cfg: dict, status: str = "approved", reviewer: str = "A Reviewer", day: str = "2026-11-02") -> None:
@@ -151,3 +152,75 @@ def test_evidence_quote_blocks_publication(cfg: dict) -> None:
     with pytest.raises(publish.GateError):
         publish.run(cfg, date(2026, 11, 2), do_commit=False)
     assert not Path(cfg["paths"]["docs_dir"]).exists()
+
+
+def tracker_src(day: str, story: str = "20261101-a") -> dict:
+    return {"story_id": story, "published": f"{day}T10:00:00+01:00", "title": "Naslov",
+            "url": "https://x.test/t", "outlet_id": "rik", "severity": 2}
+
+
+def write_trackers(cfg: dict, actor_status: str = "seed") -> None:
+    """A small trackers.json with one entry inside and one after the brief's window."""
+    with (Path(cfg["paths"]["outlets_csv"]).parent / "actors.csv").open("w", encoding="utf-8", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["actor_id", "name"])
+        w.writerow(["student_list", "Student List"])
+    cfg["paths"]["actors_csv"] = str(Path(cfg["paths"]["outlets_csv"]).parent / "actors.csv")
+    cfg["paths"]["trackers_json"] = str(Path(cfg["paths"]["outlets_csv"]).parent / "trackers.json")
+    event = {"action": "called_to_resign", "stage": "completed", "role": "Director",
+             "by_whom": "student_list", "response": "not_addressed", **tracker_src("2026-11-01")}
+    late = {**event, **tracker_src("2026-11-03", "20261103-z"), "action": "resigned", "by_whom": "not_addressed"}
+    data = {"built_at": "2026-11-03T12:00:00+01:00", "emerging_window_days": 7,
+            "resignations": [
+                {"actor_id": "a_b", "name": "A B", "actor_status": actor_status, "role": "Director",
+                 "status": "gone", "max_severity": 2, "called_by": ["student_list"], "events": [event, late]},
+                {"actor_id": "c_d", "name": "C D", "actor_status": "seed", "role": "Minister",
+                 "status": "gone", "max_severity": 2, "called_by": [], "events": [late]}],
+            "emerging_leaders": [
+                {"actor_id": "a_b", "name": "A B", "actor_status": actor_status, "role": "Director",
+                 "stories_recent": 3, "stories_prior": 0, "change": 3, "mean_stance": 0.5, "stance_rows": 3,
+                 "signals": [{"kind": "new_actor", **tracker_src("2026-11-01")}, {"kind": "new_actor", **tracker_src("2026-11-03")}]}],
+            "transition_timeline": [
+                {"thread_id": "t-1", "date": "2026-11-01T10:00:00+01:00", "title": "Naslov", "summary": "S.",
+                 "why_it_matters": "W.", "announced_only": False, "severity": 2, "confirming_link_ids": ["abc"],
+                 "outlet_groups": ["official"], "sources": [tracker_src("2026-11-01")]},
+                {"thread_id": "t-2", "date": "2026-11-03T10:00:00+01:00", "title": "Kasnije", "summary": "Late.",
+                 "why_it_matters": "W.", "announced_only": False, "severity": 1, "confirming_link_ids": [],
+                 "outlet_groups": ["official"], "sources": [tracker_src("2026-11-03")]}],
+            "pending_review": [{"name": "Proposed Person", "stories": 1, "story_ids": ["20261101-a"]}]}
+    Path(cfg["paths"]["trackers_json"]).write_text(json.dumps(data), encoding="utf-8")
+
+
+def test_no_trackers_file_means_no_tracker_panels(cfg: dict) -> None:
+    write_brief(cfg)
+    cfg["paths"]["trackers_json"] = str(Path(cfg["paths"]["review_dir"]) / "missing.json")
+    assert "trackers" not in export.build(cfg)
+
+
+def test_trackers_cut_at_latest_approved_window(cfg: dict) -> None:
+    write_brief(cfg)
+    write_trackers(cfg)
+    trackers = export.build(cfg)["trackers"]
+    assert trackers["cutoff"] == "2026-11-02T12:00:00+01:00"
+    assert [e["name"] for e in trackers["resignations"]] == ["A B"]
+    assert [e["action"] for e in trackers["resignations"][0]["events"]] == ["called_to_resign"]
+    assert [m["summary"] for m in trackers["transition_timeline"]] == ["S."]
+    assert len(trackers["emerging_leaders"][0]["signals"]) == 1
+
+
+def test_trackers_map_names_and_drop_ids(cfg: dict) -> None:
+    write_brief(cfg)
+    write_trackers(cfg)
+    trackers = export.build(cfg)["trackers"]
+    entry = trackers["resignations"][0]
+    assert entry["called_by"] == ["Student List"] and entry["unconfirmed"] is True
+    assert entry["events"][0]["outlet"] == "RIK" and entry["events"][0]["response"] == ""
+    payload = json.dumps(trackers)
+    for hidden in ("story_id", "thread_id", "confirming_link_ids", "20261101-a", "Proposed Person", "actor_id"):
+        assert hidden not in payload
+
+
+def test_confirmed_actor_is_not_flagged(cfg: dict) -> None:
+    write_brief(cfg)
+    write_trackers(cfg, actor_status="confirmed")
+    assert export.build(cfg)["trackers"]["resignations"][0]["unconfirmed"] is False

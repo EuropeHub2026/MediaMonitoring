@@ -1,7 +1,10 @@
-"""Build docs/data.js from approved briefs: headlines, summaries and links only.
+"""Build docs/data.js from approved briefs and trackers: headlines, summaries and links only.
 
-Only briefs with `status: approved` and a named reviewer are read. Story ids, article text
-and evidence quotes are not exported. `publish.py` calls this after its approval gate.
+Only briefs with `status: approved` and a named reviewer are read. Tracker entries are cut
+at the end of the latest approved brief's window, so nothing newer than a reviewed brief
+reaches the page; names the model proposed (`pending_review`) are never exported. Story ids,
+thread ids, article text and evidence quotes are not exported. `publish.py` calls this
+after its approval gate.
 """
 
 from __future__ import annotations
@@ -11,6 +14,7 @@ import json
 import logging
 import re
 from collections import Counter
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -110,6 +114,66 @@ def method_notes(cfg: dict[str, Any], outlets: list[dict[str, str]]) -> dict[str
             "service_notes": [v["detail"] for v in status.values() if v.get("state") == "cap_hit"]}
 
 
+def read_actor_names(cfg: dict[str, Any]) -> dict[str, str]:
+    """Actor id to display name, from actors.csv."""
+    with config.path(cfg, "actors_csv").open(encoding="utf-8", newline="") as fh:
+        return {row["actor_id"]: row["name"] for row in csv.DictReader(fh)}
+
+
+def page_source(src: dict[str, Any], names: dict[str, str]) -> dict[str, Any]:
+    """A tracker source for the page: date, headline, outlet name, link, severity."""
+    return {"published": src["published"], "title": src["title"], "url": src["url"],
+            "outlet": names.get(src["outlet_id"], src["outlet_id"]), "severity": src["severity"]}
+
+
+def until(items: list[dict[str, Any]], cutoff: str) -> list[dict[str, Any]]:
+    """Items published at or before the cutoff (ISO 8601 with offset)."""
+    end = datetime.fromisoformat(cutoff)
+    return [i for i in items if datetime.fromisoformat(i["published"]) <= end]
+
+
+def tracker_data(cfg: dict[str, Any], cutoff: str, outlets: dict[str, str]) -> dict[str, Any] | None:
+    """Tracker panels for the page, or None when trackers.json does not exist yet."""
+    path = config.path(cfg, "trackers_json")
+    if not path.exists():
+        return None
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    actors = read_actor_names(cfg)
+    def who(value: str) -> str:
+        return actors.get(value, value)
+    resignations = []
+    for entry in raw["resignations"]:
+        events = until(entry["events"], cutoff)
+        if not events:
+            continue
+        resignations.append({
+            "name": entry["name"], "role": entry["role"], "status": entry["status"],
+            "unconfirmed": entry["actor_status"] != "confirmed",
+            "max_severity": max(e["severity"] for e in events),
+            "called_by": sorted({who(e["by_whom"]) for e in events
+                                 if e["action"] in ("called_to_resign", "dismissal_demanded")
+                                 and e["by_whom"] != codebook.NOT_ADDRESSED}),
+            "events": [{"action": e["action"], "stage": e["stage"],
+                        "by_whom": "" if e["by_whom"] == codebook.NOT_ADDRESSED else who(e["by_whom"]),
+                        "response": "" if e["response"] == codebook.NOT_ADDRESSED else e["response"],
+                        **page_source(e, outlets)} for e in events]})
+    leaders = [{"name": e["name"], "role": e["role"], "unconfirmed": e["actor_status"] != "confirmed",
+                "stories_recent": e["stories_recent"], "stories_prior": e["stories_prior"],
+                "mean_stance": e["mean_stance"], "stance_rows": e["stance_rows"],
+                "signals": [page_source(s, outlets) for s in until(e["signals"], cutoff)]}
+               for e in raw["emerging_leaders"]]
+    timeline = []
+    for entry in raw["transition_timeline"]:
+        if datetime.fromisoformat(entry["date"]) > datetime.fromisoformat(cutoff):
+            continue
+        timeline.append({"date": entry["date"], "summary": entry["summary"],
+                         "why_it_matters": entry["why_it_matters"], "announced_only": entry["announced_only"],
+                         "severity": entry["severity"], "outlet_groups": entry["outlet_groups"],
+                         "sources": [page_source(s, outlets) for s in until(entry["sources"], cutoff)]})
+    return {"built_at": raw["built_at"], "cutoff": cutoff, "window_days": raw["emerging_window_days"],
+            "resignations": resignations, "emerging_leaders": leaders, "transition_timeline": timeline}
+
+
 def build(cfg: dict[str, Any]) -> dict[str, Any]:
     """The page data; raises ValueError when no brief is approved."""
     paths = approved_paths(cfg)
@@ -118,8 +182,13 @@ def build(cfg: dict[str, Any]) -> dict[str, Any]:
     outlets = read_outlets(cfg)
     names = {o["outlet_id"]: o["name"] for o in outlets}
     briefs = [parse_brief(p.read_text(encoding="utf-8"), names) for p in paths]
-    return {"generated": config.iso(config.now(cfg), cfg), "timezone": cfg["timezone"],
+    data = {"generated": config.iso(config.now(cfg), cfg), "timezone": cfg["timezone"],
             "briefs": briefs[::-1], "method": method_notes(cfg, outlets)}
+    cutoff = briefs[-1]["window_end"]
+    trackers = tracker_data(cfg, cutoff, names) if cutoff else None
+    if trackers:
+        data["trackers"] = trackers
+    return data
 
 
 def write(cfg: dict[str, Any], data: dict[str, Any]) -> Path:
