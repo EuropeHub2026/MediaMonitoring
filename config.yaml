@@ -104,6 +104,9 @@ extract:
   min_text_chars: 400         # shorter extracted text is marked partial
   max_html_bytes: 3000000
 
+trackers:
+  emerging_window_days: 7   # emerging leaders: stories in the last N days against the N before
+
 brief:
   min_items: 5
   max_items: 8
