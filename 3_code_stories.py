@@ -271,8 +271,27 @@ def pending_stories(cfg: dict[str, Any], links: list[dict[str, str]], coded_ids:
                                       max((c["published"] for c in copies.get(s, [])), default="")), reverse=True)
 
 
-def run(cfg: dict[str, Any], client: Any = None, limit: int | None = None) -> int:
-    """Code pending stories and refresh severity; return how many stories were coded."""
+def stale_stories(coded: list[dict[str, Any]], by_story: dict[str, list[dict[str, str]]]) -> list[str]:
+    """Story ids coded under an older codebook version that still have an article to recode."""
+    return [r["story_id"] for r in coded
+            if r.get("codebook_version") != codebook.CODEBOOK_VERSION and by_story.get(r["story_id"])]
+
+
+def replace_row(path: Path, coded: list[dict[str, Any]], row: dict[str, Any]) -> None:
+    """Swap a story's coded row for its recoded one and rewrite the file atomically."""
+    for i, old in enumerate(coded):
+        if old["story_id"] == row["story_id"]:
+            coded[i] = row
+            break
+    rewrite_rows(path, coded)
+
+
+def run(cfg: dict[str, Any], client: Any = None, limit: int | None = None, recode_stale: bool = False) -> int:
+    """Code pending stories and refresh severity; return how many stories were coded.
+
+    With recode_stale, only stories coded under an older codebook version are recoded; each
+    old row is replaced only when its recode succeeds, so a failure keeps the old row.
+    """
     links = read_csv(config.path(cfg, "links_csv"))
     links_by_id = {l["link_id"]: l for l in links}
     copies = story_copies(links)
@@ -280,7 +299,15 @@ def run(cfg: dict[str, Any], client: Any = None, limit: int | None = None) -> in
     coded = read_coded(coded_path)
     refreshed = refresh_severity(coded_path, coded, copies)
 
-    pending = pending_stories(cfg, links, {r["story_id"] for r in coded})
+    articles = latest_articles(read_csv(config.path(cfg, "articles_csv")))
+    by_story: dict[str, list[dict[str, str]]] = defaultdict(list)
+    for a in articles.values():
+        by_story[a["story_id"]].append(a)
+
+    if recode_stale:
+        pending = stale_stories(coded, by_story)
+    else:
+        pending = pending_stories(cfg, links, {r["story_id"] for r in coded})
     cap = min(limit or 10**9, int(cfg["coding"]["max_stories_per_run"]))
     if len(pending) > cap:
         log.warning("%d stories pending; coding the %d most reported this run", len(pending), cap)
@@ -290,10 +317,6 @@ def run(cfg: dict[str, Any], client: Any = None, limit: int | None = None) -> in
     known_ids = {a["actor_id"] for a in actors}
     instructions = codebook.prompt_text(actors)
     outlets = {o["outlet_id"]: o for o in read_csv(config.path(cfg, "outlets_csv"))}
-    articles = latest_articles(read_csv(config.path(cfg, "articles_csv")))
-    by_story: dict[str, list[dict[str, str]]] = defaultdict(list)
-    for a in articles.values():
-        by_story[a["story_id"]].append(a)
 
     client = client or (ai_client.make_client() if pending else None)
     new_rows, failed = [], 0
@@ -310,8 +333,11 @@ def run(cfg: dict[str, Any], client: Any = None, limit: int | None = None) -> in
             failed += 1
             log.warning("Story %s not coded (%s); retried next run", story_id, exc)
             continue
-        append_row(coded_path, row)
-        coded.append(row)
+        if recode_stale:
+            replace_row(coded_path, coded, row)
+        else:
+            append_row(coded_path, row)
+            coded.append(row)
         new_rows.append(row)
 
     if new_rows:
@@ -326,10 +352,12 @@ def main() -> None:
     """Command-line entry point."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--limit", type=int, help="code at most this many stories")
+    parser.add_argument("--recode-stale", action="store_true",
+                        help="recode only stories coded under an older codebook version")
     args = parser.parse_args()
     cfg = config.get_config()
     config.setup_logging(SCRIPT, cfg)
-    run(cfg, limit=args.limit)
+    run(cfg, limit=args.limit, recode_stale=args.recode_stale)
 
 
 if __name__ == "__main__":

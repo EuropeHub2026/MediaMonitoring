@@ -196,3 +196,15 @@ def test_threads(cfg: dict) -> None:
     assert code.assign_thread(broad_only, earlier, cfg) == "t-s4"
     too_late = thread_row("s5", "resignation_call", ["vladimir_lucic"], [], published="2026-11-20T10:00:00+01:00")
     assert code.assign_thread(too_late, earlier, cfg) == "t-s5"
+
+
+def test_recode_stale_replaces_old_rows_only(cfg: dict, tmp_path: Path) -> None:
+    code.run(cfg, client=FakeClient())
+    path = tmp_path / "coded.jsonl"
+    rows = [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines()]
+    rows[0]["codebook_version"] = "0.0.1"
+    path.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+    assert code.run(cfg, client=FakeClient(), recode_stale=True) == 1
+    after = coded(tmp_path)
+    assert len(after) == 3
+    assert all(r["codebook_version"] == codebook.CODEBOOK_VERSION for r in after.values())
