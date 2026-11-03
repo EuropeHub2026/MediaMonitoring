@@ -244,7 +244,7 @@ def write_check_file(path: Path, rows: list[dict[str, Any]]) -> None:
         ]
         for e in ext["entities"]:
             lines.append(f"  - {e['person_or_body']}{' (proposed)' if e['proposed'] else ''}, {e['role']}: "
-                         f"{e['action']} by {e['by_whom']}; response: {e['response']}; stance {e['stance']}")
+                         f"{e['action']} ({e.get('stage', 'not_addressed')}) by {e['by_whom']}; response: {e['response']}; stance {e['stance']}")
         if r["actor_warnings"]:
             lines.append(f"- actor corrections: {'; '.join(r['actor_warnings'])}")
         lines += [f"- {r['source_url']}", ""]

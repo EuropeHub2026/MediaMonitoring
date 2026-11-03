@@ -28,7 +28,7 @@ def extraction(**over) -> codebook.Extraction:
 
 def entity(pid: str, action: str, proposed: bool = False) -> codebook.EntityRow:
     return codebook.EntityRow(person_or_body=pid, proposed=proposed, role="role", action=action,
-                              by_whom="not_addressed", response="not_addressed", stance=0)
+                              stage="completed", by_whom="not_addressed", response="not_addressed", stance=0)
 
 
 class FakeResponses:

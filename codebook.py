@@ -14,9 +14,9 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-CODEBOOK_VERSION = "0.1.3"
-PROMPT_VERSION = "0.1.2"
-TRIAGE_PROMPT_VERSION = "0.1.0"
+CODEBOOK_VERSION = "0.2.0"
+PROMPT_VERSION = "0.2.0"
+TRIAGE_PROMPT_VERSION = "0.1.1"
 
 MAX_ENTITIES = 5
 MAX_QUOTE_WORDS = 25
@@ -29,8 +29,8 @@ ALERT_CATEGORY_DEFINITIONS: dict[str, str] = {
     "legal_action": "An arrest, indictment, investigation, criminal complaint filed, or case opened by a prosecutor or police.",
     "transition_milestone": "A formal step in the transfer of power: final results, constitution of parliament, nomination of a PM, government vote, handover, calling of the presidential election.",
     "new_actor": "A person or group newly entering political prominence: named for a post, launching a party, emerging as a spokesperson or candidate.",
-    "legal_challenge": "Election complaints and appeals, court rulings, Constitutional Court cases, decrees and their legality.",
-    "institution_change": "A change in control, leadership, mandate or conduct of a state company, regulator, public broadcaster or other institution (not just one appointment).",
+    "legal_challenge": "Election complaints and appeals, court rulings, Constitutional Court cases, decrees and their legality, and private lawsuits by or against public figures over their public role.",
+    "institution_change": "A change in control, leadership, mandate or conduct of a state company, regulator, public broadcaster or other institution (not just one appointment), or a closure, ownership or management decision that affects a major national media outlet's independence.",
     "protest_incident": "Protests, blockades, clashes, forced entries, attacks or security incidents with a political dimension.",
     "foreign_statement": "A statement, visit, sanction or measure by a foreign government, the EU or an international body about Serbia's transition.",
     "business_decision": "Contracts, tenders, concessions, privatisations, major state projects (EXPO 2027, Jadar, highways) and calls to review them.",
@@ -66,10 +66,18 @@ ACTION_DEFINITIONS: dict[str, str] = {
     "charged": "This person or body was indicted or charged.",
     "arrested": "This person was arrested or detained.",
     "accused": "A named party publicly accused this person or body of wrongdoing, without an official proceeding reported.",
+    "sued": "A private lawsuit (civil, defamation or private criminal action) was brought against this person or body by a named party.",
     "statement": "This person or body made a statement that matters for the transition.",
     "other": "A relevant action that fits none of the above.",
 }
 ACTIONS: list[str] = list(ACTION_DEFINITIONS)
+
+STAGE_DEFINITIONS: dict[str, str] = {
+    "completed": "The article reports the action as having happened (filed, signed, carried out, taken effect).",
+    "announced": "The action is announced, threatened, intended or planned, and the article does not report it as done.",
+    "not_addressed": "The article does not make clear whether the action has happened.",
+}
+STAGES: list[str] = list(STAGE_DEFINITIONS)
 
 STANCE_DEFINITIONS: dict[int, str] = {
     -2: "Clearly hostile: negative labels, unbalanced accusations, ridicule.",
@@ -99,6 +107,7 @@ AlertCategory = Literal[tuple(ALERT_CATEGORIES)]  # type: ignore[valid-type]
 Category = Literal[tuple(CATEGORIES)]  # type: ignore[valid-type]
 ArticleType = Literal[tuple(ARTICLE_TYPES)]  # type: ignore[valid-type]
 Action = Literal[tuple(ACTIONS)]  # type: ignore[valid-type]
+Stage = Literal[tuple(STAGES)]  # type: ignore[valid-type]
 Stance = Literal[tuple(STANCE_DEFINITIONS)]  # type: ignore[valid-type]
 
 
@@ -116,6 +125,7 @@ class EntityRow(BaseModel):
     proposed: bool = Field(description="True if person_or_body is not on the actor list.")
     role: str = Field(description="Their post or role as stated in the article, in English.")
     action: Action = Field(description="What happened to or was done by them.")
+    stage: Stage = Field(description="Whether the action has happened (completed) or is only announced, threatened or intended (announced).")
     by_whom: str = Field(description="Who called for, did or alleged it; 'not_addressed' if the article does not say.")
     response: str = Field(description="Their reply as reported, in English; 'not_addressed' if none is reported.")
     stance: Stance = Field(description="The article's stance towards this person or body, -2 to 2.")
@@ -126,7 +136,7 @@ class Extraction(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    relevant: bool = Field(description="True if the story concerns state-level political change in Serbia after the 25 Oct 2026 election, or a state-level matter in an alert category, even if the article does not mention the election or transition.")
+    relevant: bool = Field(description="True if the story concerns state-level political change in Serbia after the 25 Oct 2026 election, or a state-level matter in an alert category (including the independence of major national media), even if the article does not mention the election or transition.")
     category: Category
     secondary_category: AlertCategory | None = Field(description="A second, different alert category if the story clearly carries two; otherwise null.")
     top_tier: bool = Field(description="True if a current top-tier post holder or body is a subject of the main development; not for mere mentions or former holders.")
@@ -196,7 +206,7 @@ def triage_prompt_text() -> str:
     """Return the instructions for the headline triage pass."""
     return f"""You screen news headlines for a monitor of state-level political change in Serbia after the 25 October 2026 parliamentary election. Each line gives an id and a headline (Serbian or English).
 
-Mark possibly_relevant true if the story could concern any of: posts and appointments, resignations or dismissals, calls to resign; prosecutions, arrests, investigations; the election results, rerun and transition; new political actors; court rulings and election complaints; state companies, regulators, the public broadcaster; protests and political incidents; foreign governments' or international bodies' statements on Serbia; state contracts and major projects; economic stability linked to the transition (sanctions, central bank, banks, currency).
+Mark possibly_relevant true if the story could concern any of: posts and appointments, resignations or dismissals, calls to resign; prosecutions, arrests, investigations; the election results, rerun and transition; new political actors; court rulings and election complaints; state companies, regulators, the public broadcaster; closures, ownership or management decisions at major national media, pressure on or lawsuits involving journalists; protests and political incidents; foreign governments' or international bodies' statements on Serbia; state contracts and major projects; economic stability linked to the transition (sanctions, central bank, banks, currency).
 
 Mark false only for stories clearly outside this: sport, entertainment, celebrities, weather, accidents and crime with no political angle, consumer and lifestyle news, foreign news not about Serbia.
 
@@ -204,6 +214,11 @@ When in doubt, mark true. Return exactly one item per id."""
 
 
 # --- Severity (computed by script, never by the model) -----------------------------------
+
+
+# Outlet groups that never confirm a story: uncredited aggregator copies, and party, union
+# and association sources, which speak for themselves rather than corroborate (decided 3 Nov).
+NON_CORROBORATING_GROUPS: frozenset[str] = frozenset({"aggregator", "primary_nonstate"})
 
 
 @dataclass(frozen=True)
@@ -219,7 +234,8 @@ def compute_severity(articles: list[ArticleRef], top_tier: bool) -> tuple[int, l
 
     1 = one outlet group only; 2 = two or more outlet groups, or an official outlet;
     3 = meets 2 and the story is top-tier. Aggregator copies whose original outlet is
-    unknown keep the `aggregator` group and do not count towards confirmation.
+    unknown keep the `aggregator` group and do not count towards confirmation; nor do
+    `primary_nonstate` sources (party, union and association sites).
     """
     official = next((a for a in articles if a.outlet_group == "official"), None)
     if official is not None:
@@ -227,7 +243,7 @@ def compute_severity(articles: list[ArticleRef], top_tier: bool) -> tuple[int, l
     else:
         first_by_group: dict[str, str] = {}
         for a in articles:
-            if a.outlet_group != "aggregator":
+            if a.outlet_group not in NON_CORROBORATING_GROUPS:
                 first_by_group.setdefault(a.outlet_group, a.article_id)
         confirming = list(first_by_group.values())[:2] if len(first_by_group) >= 2 else []
     if not confirming:
@@ -263,7 +279,7 @@ Rules:
 - Always answer in English, except evidence_quote, which is copied verbatim from the article in its original language (at most {MAX_QUOTE_WORDS} words).
 - Accusations are recorded with who made them (by_whom) and the accused party's reply (response).
 
-relevant: true if the story concerns state-level political change in Serbia since the election (posts, institutions, prosecutions, the transition, protests, foreign reactions, state business decisions, economic stability), or any state-level matter that fits an alert category. The article does not have to mention the election or the transition: a national state body, state company, senior official, national prosecution or strategic company such as NIS is enough. A headline-only story is judged on what the headline says; missing detail is not a reason for false. False for local matters with no national angle (a school, a municipal utility), foreign events with no Serbian state angle, and routine government business. If false: category "background", no secondary_category, no entities.
+relevant: true if the story concerns state-level political change in Serbia since the election (posts, institutions, prosecutions, the transition, protests, foreign reactions, state business decisions, economic stability, the independence of major national media and their journalists), or any state-level matter that fits an alert category. The article does not have to mention the election or the transition: a national state body, state company, senior official, national prosecution or strategic company such as NIS is enough, as is a closure, ownership or management decision at a major national media outlet, or a lawsuit between journalists and senior politicians, when that is the main development (not an interview or celebrity piece that only mentions layoffs or a change). A headline-only story is judged on what the headline says; missing detail is not a reason for false. False for local matters with no national angle (a school, a municipal utility), foreign events with no Serbian state angle, and routine government business. If false: category "background", no secondary_category, no entities.
 category: use "background" only if no alert category fits. transition_milestone is for news that a formal step has just happened or been officially scheduled (results published by RIK, a rerun ordered, parliament constituted). Commentary, analysis or retrospectives that discuss the election outcome without reporting a new formal step are background.
 
 category (choose one):
@@ -282,6 +298,8 @@ actors: the actor_ids below that the story is about. Do not list anyone not on t
 entities: 0 to {MAX_ENTITIES} rows, one per person or body something happened to or was done by. Use the actor_id when the person or body is on the list and set proposed to false; otherwise write the name as given in the article and set proposed to true.
 action:
 {_bullets(ACTION_DEFINITIONS)}
+stage (whether the action has happened): never mark as completed what the article reports only as announced, threatened, planned or intended (for example "will file a lawsuit", "announced the closure"). Calls, demands, accusations and statements are completed once made.
+{_bullets(STAGE_DEFINITIONS)}
 stance (the article's stance towards this person or body): labels count; quoted criticism counts when it is not balanced by a reply or other view; opinion pieces speak for the article.
 {_bullets(STANCE_DEFINITIONS)}
 

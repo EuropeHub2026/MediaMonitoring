@@ -54,3 +54,5 @@ ewb,European Western Balkans,europeanwesternbalkans.com,international,1,en,latn,
 intellinews,bne IntelliNews,intellinews.com,international,1,en,latn,https://www.intellinews.com/feed/,,yes,yes,yes,yes,2026-10-30,Paywall: headline and free text only
 naslovi,Naslovi.net,naslovi.net,aggregator,1,sr,latn,https://www.naslovi.net/rss,,no,no,no,yes,2026-10-30,Credit the original outlet when known
 google_news,Google News,news.google.com,aggregator,1,sr,mixed,,,no,no,no,yes,2026-10-30,Collection mechanism; items credited to the original outlet after link decoding
+studentska_lista,Studentska lista – Studenti pobeđuju (official site),gg.studenti.org.rs,primary_nonstate,2,sr,mixed,,,yes,no,no,yes,2026-11-03,"Primary source for the list: programme, candidates, official documents. No RSS (/feed/ 404); sitemap is not a news sitemap. robots.txt Content-Signal search=yes ai-train=no use=reference. Official social channels go in config.yaml at stage 4"
+uns,Journalists' Association of Serbia (UNS),uns.org.rs,primary_nonstate,1,sr,latn,,,yes,no,no,yes,2026-11-03,Near-primary source for journalist statements and media freedom. /rss and /sitemap.xml return 404

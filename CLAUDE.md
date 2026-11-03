@@ -43,9 +43,17 @@ the handover (e.g. Ivica Dačić caretaker interior minister).
 - **Languages:** Serbian (Cyrillic and Latin) and English from day 1; French and German via
   Google News editions from stage 4. The AI always answers in English.
 - **Outlet groups** (`outlets.csv`): `official`, `serbian_independent`,
-  `serbian_pro_government`, `international`, `aggregator`. Reach tier 3 = global or
-  national flagship, 2 = national, 1 = specialist. Aggregators are credited to the original
-  outlet when known.
+  `serbian_pro_government`, `international`, `aggregator`, `primary_nonstate`. Reach tier
+  3 = global or national flagship, 2 = national, 1 = specialist. Aggregators are credited
+  to the original outlet when known.
+- **Primary non-state sources (decided 3 Nov):** the Student List's official site
+  (gg.studenti.org.rs; its official social channels from stage 4) and UNS are
+  `primary_nonstate`: collected and linked, but never counted towards severity, since they
+  speak for themselves rather than corroborate. They supplement, never replace, the
+  institutional sources: government, National Assembly, RIK, RTS, REM, prosecutors and
+  courts stay the default confirmation for formal appointments, decisions and legal
+  actions. For the media-independence strand, Nova.rs, Radar, N1 and UNS are watched, and
+  a newsroom union's own statement is preferred to secondary reporting of it.
 - **Time zone:** CET everywhere (`timezone: Europe/Belgrade` in `config.yaml`). Collection
   at 06:00, draft brief ready for the team by 07:30, publication by 09:00 after approval.
 - **Weekends:** collection runs every day; briefs are published Monday to Friday. The
@@ -118,15 +126,16 @@ the handover (e.g. Ivica Dačić caretaker interior minister).
   more outlet groups, or by an `official` outlet; 3 = meets 2 and `top_tier` is yes. A
   severity-3 story records the ids of two articles from different outlet groups (or one
   official article) that confirm it. Aggregator copies count under the original outlet's
-  group when known.
+  group when known; `primary_nonstate` copies never count.
 - **Top-tier posts:** PM and ministers (including caretaker ministers), the President or
   acting president, Speaker of Parliament, head of police, BIA, the Supreme Public
   Prosecutor and the Prosecutor's Office for Organized Crime (TOK), RIK, REM, RTS, the NBS
   governor, and the CEO of a state company (e.g. Telekom Srbija, EPS, NIS, Srbijagas).
 - **Entity level** (0 to 5 rows per story): `person_or_body`, `role`, `action`
   (`called_to_resign`, `dismissal_demanded`, `resigned`, `dismissed`, `suspended`,
-  `appointed`, `investigated`, `charged`, `arrested`, `accused`, `statement`, `other`),
-  `by_whom`, `response` (the accused or targeted party's reply, or `not_addressed`),
+  `appointed`, `investigated`, `charged`, `arrested`, `accused`, `sued`, `statement`,
+  `other`), `stage` (`completed`, `announced` for threatened or intended actions not yet
+  reported as done, or `not_addressed`), `by_whom`, `response` (the accused or targeted party's reply, or `not_addressed`),
   `stance` (−2 to +2, the article's stance towards this person or body). `accused` covers
   public allegations not yet backed by an official proceeding; they are recorded with
   attribution (`by_whom`) and the response. The trackers are built from these rows only.
@@ -307,11 +316,13 @@ Working days from Monday 2 November 2026. Tick items as they are done and add th
   - 2 Nov: not done from the newsletters. As a stopgap Claude coded 30 randomly drawn collected stories from excerpts (`data/validation/hand_codes_claude.csv`), which is not independent validation. Prompt 0.1.2 / codebook 0.1.3 scored category 80%, `top_tier` 90%, `relevant` 90% against them (before: 63%, 77%, 90%), on the sample the fixes were designed from. The 30 coded stories in `data/coded.jsonl` predate these versions and need recoding. A reviewer still needs to check these codes.
 - [x] `4_draft_brief.py` producing the brief and the alert focus box with story ids — 2 Nov (stories consolidated by thread; the model writes and merges focus lines, severity and rank stay script-computed across the cited stories; 396 coded, 4 failed on the 25-word quote limit and retry next run; first draft in `review/brief_2026-11-02.md`, numbers and names traced to sources)
 - [x] `publish.py` with the approval gate; `6_export_for_web.py`; `docs/index.html` with the focus box, brief and method notes — 2 Nov (template in `web/index.html`, copied to `docs/` by `publish.py` so nothing reaches `docs/` before approval; `publish.py` also refuses if an evidence quote reaches the page data; script parses, not yet seen in a browser)
-- [ ] GitHub Pages enabled; first approved brief on the page
+- [x] GitHub Pages enabled; first approved brief on the page — 2 Nov (https://europehub2026.github.io/MediaMonitoring/, brief approved by GKK)
 
 Done when: a reviewer has approved one real morning brief and it is visible at the Pages URL.
 
 ### Stage 2 · Low version (days 3 to 4, 4 to 5 Nov)
+
+- 3 Nov, added at the team's request: media-independence strand. `actors.csv` gains Nova (daily), Radar, ANN, Alpac Capital, the Nova/Radar union, UNS, Jovan Memedović and Olivera Kovačević (`status: confirmed`); Student List aliases extended. `outlets.csv` gains the Student List site and UNS as `primary_nonstate`. Codebook 0.2.0 / prompt 0.2.0: `stage` field, `sued` action, media decisions in scope (numbers in the `codebook.md` change log). Stories coded before 0.2.0 have no `stage` and should be recoded before `5_build_trackers.py` relies on it.
 
 - [ ] `5_build_trackers.py`: resignation and dismissal tracker, emerging leaders, transition timeline from entity rows
 - [ ] Article list panel with search and filters (category, actor, outlet group, date)
@@ -331,7 +342,7 @@ Done when: an external stakeholder has received a PDF generated by the script fo
 
 ### Stage 4 · Open social (days 6 to 8, 9 to 11 Nov)
 
-- [ ] Account and channel lists in `config.yaml` (about 60 X accounts, 15 YouTube channels, 20 Telegram channels) confirmed by the team
+- [ ] Account and channel lists in `config.yaml` (about 60 X accounts, 15 YouTube channels, 20 Telegram channels) confirmed by the team; include the Student List's official channels
 - [ ] `8_collect_social.py` for X (pay-per-use, spending limit set), YouTube Data API, Telegram public channels
 - [ ] Social posts coded with a shorter prompt; grouped into the same `story_id` where they carry a press story
 - [ ] `9_social_trends.py` and the social media trends panel; coverage by outlet group panel

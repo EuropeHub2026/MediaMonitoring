@@ -1,6 +1,6 @@
 # Codebook
 
-**Version 0.1.3** (2 Nov 2026). Prompt version 0.1.2. Triage prompt version 0.1.0.
+**Version 0.2.0** (3 Nov 2026). Prompt version 0.2.0. Triage prompt version 0.1.1.
 
 This is the plain-English codebook for the Serbia Post-Election Monitor. `codebook.py`
 holds the same lists, the `Extraction` schema and the prompt. Keep the two in sync and
@@ -39,7 +39,7 @@ have their text extracted and coded.
 
 | Field | Values | Notes |
 |---|---|---|
-| `relevant` | yes / no | Yes if the story concerns state-level political change in Serbia since the 25 Oct 2026 election, or a state-level matter in an alert category. The article need not mention the election or transition. Headline-only stories are judged on the headline; missing detail is not a reason for no. |
+| `relevant` | yes / no | Yes if the story concerns state-level political change in Serbia since the 25 Oct 2026 election, or a state-level matter in an alert category. The article need not mention the election or transition. A closure, ownership or management decision at a major national media outlet, or a lawsuit between journalists and senior politicians, counts (media independence) when it is the main development; an interview or celebrity piece that only mentions layoffs or a change does not. Headline-only stories are judged on the headline; missing detail is not a reason for no. |
 | `category` | one category below | `background` only if relevant and no alert category fits; `transition_milestone` is for news that a formal step just happened or was officially scheduled; commentary on the outcome with no new formal step is `background`. Irrelevant stories are `background`. |
 | `secondary_category` | one alert category, or empty | Only when the story clearly carries two, and never the same as `category`. |
 | `top_tier` | yes / no | Is a current holder of a top-tier post, or a top-tier body (list below), a subject of the main development? No for mere mentions and former holders. |
@@ -81,10 +81,15 @@ Alert categories, in no particular order:
   launching a party, emerging as a spokesperson or candidate. *Example: a Student List
   candidate sets out priorities as a would-be interior minister.*
 - `legal_challenge`: Election complaints and appeals, court rulings, Constitutional Court
-  cases, decrees and their legality.
+  cases, decrees and their legality, and private lawsuits by or against public figures
+  over their public role. *Example: two RTS journalists announce lawsuits against
+  Aleksandar Vučić (entity rows: `sued`, stage `announced`).*
 - `institution_change`: A change in control, leadership, mandate or conduct of a state
-  company, regulator, public broadcaster or other institution (not just one appointment).
-  *Example: the Supreme Public Prosecutor orders a review of all 87 prosecutor's offices.*
+  company, regulator, public broadcaster or other institution (not just one appointment),
+  or a closure, ownership or management decision that affects a major national media
+  outlet's independence. *Example: the Supreme Public Prosecutor orders a review of all 87
+  prosecutor's offices. Example: management announces the closure of the Nova daily's
+  print edition (stage `announced` until it happens).*
 - `protest_incident`: Protests, blockades, clashes, forced entries, attacks or security
   incidents with a political dimension. *Example: citizens enter a pro-government TV
   station and interrupt its broadcast.*
@@ -117,7 +122,10 @@ And:
 
 A story of severity 2 or 3 records the confirming article ids: two articles from different
 outlet groups, or one official article. Aggregator copies whose original outlet is unknown
-do not count towards confirmation.
+do not count towards confirmation, and neither do `primary_nonstate` sources (party, union
+and association sites such as the Student List site or UNS): they speak for themselves
+rather than corroborate. Formal appointments, decisions and legal actions are confirmed by
+`official` sources (government, National Assembly, RIK, RTS, REM, prosecutors, courts).
 
 ## Top-tier posts and bodies
 
@@ -154,6 +162,7 @@ from these rows only.
 | `proposed` | `true` when the name is not on `actors.csv`. Proposed names never appear in trackers or on the page until a reviewer adds them to `actors.csv`. |
 | `role` | Their post or role as stated in the article. |
 | `action` | One action below. |
+| `stage` | `completed`, `announced` or `not_addressed` (below). |
 | `by_whom` | Who called for, did or alleged it; `not_addressed` if not stated. |
 | `response` | Their reply as reported; `not_addressed` if none. |
 | `stance` | −2 to +2, the article's stance towards this person or body. |
@@ -173,8 +182,23 @@ from these rows only.
 - `accused`: A named party publicly accused this person or body of wrongdoing, without an
   official proceeding reported. *Example: a Student List candidate alleges an attempted
   RSD 1 billion withdrawal from a state bank; the bank denies it (response).*
+- `sued`: A private lawsuit (civil, defamation or private criminal action) was brought
+  against this person or body by a named party.
 - `statement`: This person or body made a statement that matters for the transition.
 - `other`: A relevant action that fits none of the above.
+
+### Stage
+
+Whether the action has happened. Never mark as completed what the article reports only as
+announced, threatened, planned or intended ("will file a lawsuit", "announced the
+closure"). Calls, demands, accusations and statements are completed once made. When a
+later story confirms the act, its own entity row is `completed`; the thread links the two.
+
+- `completed`: The article reports the action as having happened (filed, signed, carried
+  out, taken effect).
+- `announced`: The action is announced, threatened, intended or planned, and the article
+  does not report it as done.
+- `not_addressed`: The article does not make clear whether the action has happened.
 
 ### Stance
 
@@ -203,3 +227,4 @@ when someone leaves a post: update `role` and `as_of`.
 | 0.1.1 | 30 Oct 2026 | Added headline triage (schema and prompt); story-level definitions unchanged. | No hand-coded sample yet. |
 | 0.1.2 | 2 Nov 2026 | Widened `relevant`: state-level alert-category matters count without an explicit election link; headline-only stories judged on the headline; `background` narrowed. Prompt 0.1.1. | No hand-coded sample yet, so no `10_validate.py` numbers. Informal check on the 15 of 30 stories rejected under 0.1.0: 9 now relevant. |
 | 0.1.3 | 2 Nov 2026 | `transition_milestone` limited to news of a new formal step, commentary on the outcome is `background`; `top_tier` limited to current holders who are a subject of the main development. Prompt 0.1.2. | No `10_validate.py` yet. Provisional check against 30 Claude-coded stories (not reviewer codes), 12 English and 18 Serbian: category 63% to 80%, `top_tier` 77% to 90%, `relevant` 90% unchanged. The fixes were designed on this same sample. |
+| 0.2.0 | 3 Nov 2026 | Media-independence strand: `relevant`, `institution_change` and triage cover closure, ownership or management decisions at major national media and lawsuits involving journalists; `legal_challenge` covers private lawsuits by or against public figures; new action `sued`; new entity field `stage` (`completed` / `announced` / `not_addressed`). `primary_nonstate` outlet group does not count towards severity. Prompt 0.2.0, triage prompt 0.1.1. | No `10_validate.py` yet. Same 30 Claude-coded stories (not reviewer codes). Before (0.1.3): relevant 90%, category 80%, `top_tier` 90%. After (0.2.0, rerun after narrowing the media rule; 29 scored, 1 failed the quote limit): relevant 90%, category 86%, `top_tier` 90%. A first 0.2.0 run, before the narrowing, scored category 70%; four stories unrelated to the change flipped between the two runs, so run-to-run variation exceeds the measured difference. The sample has no media-independence or lawsuit stories and no hand-coded `stage`, so the new fields are unvalidated; two synthetic inputs (Nova/Radar closure, Memedović/Kovačević lawsuits) were coded as intended. |

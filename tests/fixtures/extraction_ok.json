@@ -13,7 +13,8 @@
       "action": "dismissal_demanded",
       "by_whom": "Student List",
       "response": "not_addressed",
-      "stance": -1
+      "stance": -1,
+      "stage": "completed"
     }
   ],
   "summary": "Student List candidates demanded the dismissal of Telekom Srbija's CEO. They also called for a review of state contracts.",

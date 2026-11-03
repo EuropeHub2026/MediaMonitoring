@@ -34,8 +34,8 @@ def test_codebook_md_has_version() -> None:
 
 @pytest.mark.parametrize(
     "codes",
-    [cb.CATEGORIES, cb.ACTIONS, cb.ARTICLE_TYPES],
-    ids=["categories", "actions", "article_types"],
+    [cb.CATEGORIES, cb.ACTIONS, cb.ARTICLE_TYPES, cb.STAGES],
+    ids=["categories", "actions", "article_types", "stages"],
 )
 def test_codebook_md_defines_every_code(codes: list[str]) -> None:
     md = (ROOT / "codebook.md").read_text(encoding="utf-8")
@@ -92,7 +92,7 @@ def test_too_many_entities_rejected(good: dict) -> None:
 
 
 def test_unknown_action_and_stance_rejected(good: dict) -> None:
-    for field, value in (("action", "fired"), ("stance", 3)):
+    for field, value in (("action", "fired"), ("stance", 3), ("stage", "rumoured")):
         bad = json.loads(json.dumps(good))
         bad["entities"][0][field] = value
         with pytest.raises(ValidationError):
@@ -132,6 +132,17 @@ def test_severity_two_groups() -> None:
 def test_severity_official_confirms_alone() -> None:
     arts = [A("a1", "serbian_pro_government"), A("a2", "official")]
     assert cb.compute_severity(arts, top_tier=True) == (3, ["a2"])
+
+
+def test_severity_ignores_primary_nonstate() -> None:
+    """A party or union site confirming its own statement does not raise severity."""
+    arts = [A("a1", "serbian_independent"), A("a2", "primary_nonstate")]
+    assert cb.compute_severity(arts, top_tier=True) == (1, [])
+
+
+def test_prompt_lists_stages(actors: list[dict[str, str]]) -> None:
+    text = cb.prompt_text(actors)
+    assert all(f"- {s}:" in text for s in cb.STAGES)
 
 
 def test_severity_ignores_uncredited_aggregator() -> None:

@@ -38,7 +38,9 @@ paths:
   log_dir: data/logs
 
 # The fixed outlet groups (CLAUDE.md, Scope decisions). outlets.csv may only use these.
-outlet_groups: [official, serbian_independent, serbian_pro_government, international, aggregator]
+# primary_nonstate: party, union and association sites; collected but never counted
+# towards severity (codebook.NON_CORROBORATING_GROUPS).
+outlet_groups: [official, serbian_independent, serbian_pro_government, international, aggregator, primary_nonstate]
 
 languages:
   active: [sr, en]

@@ -1,6 +1,6 @@
 actor_id,name,type,affiliation,role,top_tier,status,as_of,aliases
-student_list,Student List – Students Win,list,,Won the 25 Oct 2026 parliamentary election (141 seats projected),no,seed,2026-10-30,Studentska lista;Studenti pobeđuju;Студентска листа
-students_in_blockade,Students in Blockade,movement,,Student protest movement behind the Student List,no,seed,2026-10-30,Studenti u blokadi;Студенти у блокади
+student_list,Student List – Students Win,list,,Won the 25 Oct 2026 parliamentary election (141 seats projected),no,seed,2026-10-30,Studentska lista;Studenti pobeđuju;Студентска листа;Studentska lista – Studenti pobeđuju;Studentska lista - Studenti pobedjuju;Студентска листа – Студенти побеђују
+students_in_blockade,Students in Blockade,movement,,Student protest movement behind the Student List,no,seed,2026-10-30,Studenti u blokadi;Студенти у блокади;Studenti u blokadama;Студенти у блокадама
 united_serbia,Aleksandar Vučić – United Serbia,list,sns,SNS-led list (103 seats projected),no,seed,2026-10-30,Ujedinjena Srbija;Уједињена Србија
 sns,Serbian Progressive Party (SNS),party,,Ruling party 2012–2026,no,seed,2026-10-30,SNS;Srpska napredna stranka;Српска напредна странка;naprednjaci
 sps,Socialist Party of Serbia (SPS),party,,Below threshold on 25 Oct 2026,no,seed,2026-10-30,SPS;Socijalistička partija Srbije
@@ -34,6 +34,8 @@ dragan_vucicevic,Dragan J. Vučićević,person,informer,Editor-in-chief of Infor
 zeljko_mitrovic,Željko Mitrović,person,pink,Owner of TV Pink,no,seed,2026-10-30,Mitrović;Митровић
 davor_macura,Davor Macura,person,,Owner of Alta banka and Alta grupa,no,seed,2026-10-30,Macura;Мацура
 marko_cadez,Marko Čadež,person,pks,President of the Chamber of Commerce and Industry of Serbia,no,seed,2026-10-30,Čadež;Cadez;Чадеж
+jovan_memedovic,Jovan Memedović,person,rts,RTS journalist and presenter; announced a lawsuit against Aleksandar Vučić (not confirmed filed as of 3 Nov 2026),no,confirmed,2026-11-03,Memedović;Memedovic;Мемедовић
+olivera_kovacevic,Olivera Kovačević,person,rts,RTS journalist; President of the UNS Executive Board; announced a lawsuit against Aleksandar Vučić (not confirmed filed as of 3 Nov 2026),no,confirmed,2026-11-03,Kovačević;Kovacevic;Оливера Ковачевић
 government,Government of Serbia,institution,,Caretaker government until handover,yes,seed,2026-10-30,Vlada Srbije;Влада Србије
 presidency,Presidency of Serbia,institution,,,yes,seed,2026-10-30,Predsedništvo
 national_assembly,National Assembly,institution,,,yes,seed,2026-10-30,Narodna skupština;Скупштина
@@ -62,10 +64,14 @@ postanska_stedionica,Banka Poštanska štedionica,state_company,,,no,seed,2026-1
 expo_2027,EXPO 2027,state_company,,,no,seed,2026-10-30,Expo 2027
 informer,Informer,media,,,no,seed,2026-10-30,TV Informer;Informer TV
 pink,TV Pink,media,,,no,seed,2026-10-30,RTV Pink
+nova_daily,Nova (daily newspaper),media,,Independent print daily; closure of the print edition announced by management (Nov 2026),no,confirmed,2026-11-03,dnevni list Nova;Nova novine;štampana Nova;Нова
+radar,Radar,media,,Independent weekly and portal (radar.nova.rs); subject of announced cost-cutting constraints (Nov 2026),no,confirmed,2026-11-03,nedeljnik Radar;Радар
 pks,Chamber of Commerce and Industry of Serbia (PKS),civil_society,,,no,seed,2026-10-30,PKS;Privredna komora Srbije
 cesid,CeSID,civil_society,,,no,seed,2026-10-30,
 crta,CRTA,civil_society,,,no,seed,2026-10-30,
 transparency_serbia,Transparency Serbia,civil_society,,,no,seed,2026-10-30,Transparentnost Srbija
+uns,Journalists' Association of Serbia (UNS),civil_society,,Journalists' association; statements on journalists and media freedom,no,confirmed,2026-11-03,UNS;Udruženje novinara Srbije;УНС;Удружење новинара Србије
+nova_radar_union,Nova and Radar journalists' union,civil_society,,Newsroom union at Nova and Radar; its statements give the newsroom position on the cost-cutting,no,confirmed,2026-11-03,Sindikat Nove i Radara;sindikat novinara Nove i Radara
 eu,European Union,foreign,,Including the European Commission,no,seed,2026-10-30,EU;European Commission;Evropska unija
 us_government,United States government,foreign,,Including the State Department and Congress,no,seed,2026-10-30,US;State Department
 ofac,US Office of Foreign Assets Control (OFAC),foreign,,,no,seed,2026-10-30,OFAC
@@ -77,3 +83,5 @@ rio_tinto,Rio Tinto,company,,Jadar lithium project,no,seed,2026-10-30,Jadar
 imf,International Monetary Fund,international_org,,,no,seed,2026-10-30,IMF;MMF
 world_bank,World Bank,international_org,,,no,seed,2026-10-30,Svetska banka
 fitch,Fitch Ratings,company,,Rating agency,no,seed,2026-10-30,Fitch
+ann,Adria News Network (ANN),company,,Management/ownership actor behind the announced Nova and Radar cost-cutting measures,no,confirmed,2026-11-03,ANN;Adria News Network
+alpac_capital,Alpac Capital,company,,Ownership actor behind the announced Nova and Radar cost-cutting measures,no,confirmed,2026-11-03,Alpac
