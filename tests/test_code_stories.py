@@ -1,5 +1,6 @@
 """Tests for 3_code_stories.py with a fake AI client; no API calls."""
 
+from datetime import datetime
 import csv
 import importlib
 import json
@@ -208,3 +209,11 @@ def test_recode_stale_replaces_old_rows_only(cfg: dict, tmp_path: Path) -> None:
     after = coded(tmp_path)
     assert len(after) == 3
     assert all(r["codebook_version"] == codebook.CODEBOOK_VERSION for r in after.values())
+
+
+def test_published_since_keeps_recent_stories() -> None:
+    copies = {"old": [{"published": "2026-11-01T10:00:00+01:00"}],
+              "new": [{"published": "2026-11-01T10:00:00+01:00"}, {"published": "2026-11-03T08:00:00+01:00"}],
+              "undated": [{"published": ""}]}
+    since = datetime.fromisoformat("2026-11-02T12:00:00+01:00")
+    assert code.published_since(["new", "old", "undated"], copies, since) == ["new"]

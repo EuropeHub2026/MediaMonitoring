@@ -286,8 +286,19 @@ def replace_row(path: Path, coded: list[dict[str, Any]], row: dict[str, Any]) ->
     rewrite_rows(path, coded)
 
 
-def run(cfg: dict[str, Any], client: Any = None, limit: int | None = None, recode_stale: bool = False) -> int:
+def published_since(story_ids: list[str], copies: dict[str, list[dict[str, str]]], since: datetime) -> list[str]:
+    """Keep stories with at least one copy published at or after `since`, order unchanged."""
+    return [s for s in story_ids
+            if any(c.get("published") and datetime.fromisoformat(c["published"]) >= since
+                   for c in copies.get(s, []))]
+
+
+def run(cfg: dict[str, Any], client: Any = None, limit: int | None = None, recode_stale: bool = False,
+        since: datetime | None = None) -> int:
     """Code pending stories and refresh severity; return how many stories were coded.
+
+    With since, only stories with a copy published at or after that time are coded, so a
+    backlog does not crowd out the stories the next brief needs.
 
     With recode_stale, only stories coded under an older codebook version are recoded; each
     old row is replaced only when its recode succeeds, so a failure keeps the old row.
@@ -308,6 +319,8 @@ def run(cfg: dict[str, Any], client: Any = None, limit: int | None = None, recod
         pending = stale_stories(coded, by_story)
     else:
         pending = pending_stories(cfg, links, {r["story_id"] for r in coded})
+    if since:
+        pending = published_since(pending, copies, since)
     cap = min(limit or 10**9, int(cfg["coding"]["max_stories_per_run"]))
     if len(pending) > cap:
         log.warning("%d stories pending; coding the %d most reported this run", len(pending), cap)
@@ -354,10 +367,12 @@ def main() -> None:
     parser.add_argument("--limit", type=int, help="code at most this many stories")
     parser.add_argument("--recode-stale", action="store_true",
                         help="recode only stories coded under an older codebook version")
+    parser.add_argument("--since", type=datetime.fromisoformat,
+                        help="code only stories published at or after this ISO time (with offset)")
     args = parser.parse_args()
     cfg = config.get_config()
     config.setup_logging(SCRIPT, cfg)
-    run(cfg, limit=args.limit, recode_stale=args.recode_stale)
+    run(cfg, limit=args.limit, recode_stale=args.recode_stale, since=args.since)
 
 
 if __name__ == "__main__":
