@@ -180,23 +180,17 @@ def test_spend_cap_stops_run(cfg: dict, tmp_path: Path) -> None:
     assert not (tmp_path / "coded.jsonl").exists()
 
 
-def thread_row(story_id: str, category: str, entities: list[str], actors: list[str], thread: str = "",
-               published: str = "2026-10-29T10:00:00+01:00") -> dict:
-    return {"story_id": story_id, "thread_id": thread or f"t-{story_id}", "published": published,
-            "extraction": {"relevant": True, "category": category, "secondary_category": None,
-                           "actors": actors, "entities": [{"person_or_body": e, "proposed": False} for e in entities]}}
+def test_rows_get_event_and_thread_ids(cfg: dict, tmp_path: Path) -> None:
+    code.run(cfg, client=FakeClient())
+    for row in coded(tmp_path).values():
+        assert row["event_id"].startswith("e-") and row["thread_id"].startswith("t-")
 
 
-def test_threads(cfg: dict) -> None:
-    earlier = [thread_row("s1", "resignation_call", ["vladimir_lucic"], ["telekom_srbija"], thread="t-s1")]
-    same_issue = thread_row("s2", "resignation_call", ["vladimir_lucic"], [])
-    assert code.assign_thread(same_issue, earlier, cfg) == "t-s1"
-    other_category = thread_row("s3", "protest_incident", ["vladimir_lucic"], [])
-    assert code.assign_thread(other_category, earlier, cfg) == "t-s3"
-    broad_only = thread_row("s4", "resignation_call", [], ["student_list"])
-    assert code.assign_thread(broad_only, earlier, cfg) == "t-s4"
-    too_late = thread_row("s5", "resignation_call", ["vladimir_lucic"], [], published="2026-11-20T10:00:00+01:00")
-    assert code.assign_thread(too_late, earlier, cfg) == "t-s5"
+def test_group_only_codes_nothing(cfg: dict, tmp_path: Path) -> None:
+    code.run(cfg, client=FakeClient(), limit=1)
+    client = FakeClient()
+    assert code.run(cfg, client=client, group_only=True) == 0
+    assert client.responses.inputs == [] and set(coded(tmp_path)) == {"s-rts"}
 
 
 def test_recode_stale_replaces_old_rows_only(cfg: dict, tmp_path: Path) -> None:

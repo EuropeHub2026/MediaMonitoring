@@ -24,8 +24,8 @@ def ent(pid: str, action: str, stage: str = "completed", proposed: bool = False,
 
 def story(sid: str, entities: list[dict], published: str = "2026-11-02T10:00:00+01:00",
           category: str = "resignation_call", actors: list[str] | None = None, thread: str = "",
-          relevant: bool = True, severity: int = 1) -> dict:
-    return {"story_id": sid, "thread_id": thread, "published": published, "title": f"T {sid}",
+          relevant: bool = True, severity: int = 1, event: str = "") -> dict:
+    return {"story_id": sid, "thread_id": thread, "event_id": event, "published": published, "title": f"T {sid}",
             "source_url": f"https://x.test/{sid}", "outlet_id": "n1", "severity": severity, "n_copies": 1,
             "codebook_version": "0.2.0",
             "extraction": {"relevant": relevant, "category": category, "secondary_category": None,
@@ -66,14 +66,17 @@ def test_emerging_counts_persons_once_per_story_with_change() -> None:
     assert [s["kind"] for s in lucic["signals"]] == ["appointed"]
 
 
-def test_timeline_one_entry_per_thread_without_quotes() -> None:
-    stories = [story("m1", [], category="transition_milestone", thread="t1", published="2026-11-01T10:00:00+01:00"),
-               story("m2", [], category="transition_milestone", thread="t1"),
+def test_timeline_one_entry_per_event_without_quotes() -> None:
+    stories = [story("m1", [], category="transition_milestone", thread="t1", event="e1",
+                     published="2026-11-01T10:00:00+01:00"),
+               story("m2", [], category="transition_milestone", thread="t1", event="e1"),
+               story("m3", [], category="transition_milestone", thread="t1", event="e3"),
                story("x", [], category="post_change")]
     copies = {"m1": [{"link_id": "l1", "outlet_group": "official", "outlet_id": "rik"}],
               "m2": [{"link_id": "l2", "outlet_group": "serbian_independent", "outlet_id": "n1"}]}
     out = trk.transition_timeline(trk.relevant(stories), copies)
-    assert len(out) == 1 and out[0]["date"].startswith("2026-11-01") and out[0]["severity"] == 2
+    assert [e["event_id"] for e in out] == ["e1", "e3"]      # same thread, two events
+    assert out[0]["date"].startswith("2026-11-01") and out[0]["severity"] == 2
     assert "SECRET QUOTE" not in json.dumps(out)
 
 

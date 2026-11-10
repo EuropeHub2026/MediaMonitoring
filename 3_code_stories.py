@@ -5,11 +5,12 @@ yet in data/coded.jsonl, the fullest copy is sent to the coding model with
 codebook.prompt_text() and parsed into codebook.Extraction. The script then:
 - corrects actor ids against actors.csv (unknown ids dropped, `proposed` set from the list)
   and records what it corrected in `actor_warnings`;
-- computes severity from all copies of the story (codebook.compute_severity);
-- assigns a thread_id linking it to a recent story about the same issue.
+- records the story's copies (outlets, outlet groups, copy count).
 
 Each row is written as soon as it is coded; a failed story writes nothing and is retried
-on the next run. Every run also refreshes severity for coded stories that gained copies.
+on the next run. Every run then refreshes copy facts and regroups all coded stories
+(grouping.regroup): same-event stories share an `event_id`, events on one running issue share
+a `thread_id`, and severity is computed per event across all its copies.
 """
 
 from __future__ import annotations
@@ -20,13 +21,14 @@ import json
 import logging
 import os
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import ai_client
 import codebook
 import config
+import grouping
 
 SCRIPT = "3_code_stories"
 log = logging.getLogger(SCRIPT)
@@ -105,46 +107,6 @@ def correct_actors(extraction: codebook.Extraction, known_ids: set[str]) -> list
     return warnings
 
 
-# --- Threads -------------------------------------------------------------------------------
-
-
-def thread_keys(row: dict[str, Any], ignore: set[str]) -> tuple[set[str], set[str], set[str]]:
-    """Return (categories, entity ids, actor ids) used to match a story to a thread."""
-    ext = row["extraction"]
-    cats = {ext["category"]} | ({ext["secondary_category"]} if ext.get("secondary_category") else set())
-    entities = {e["person_or_body"] for e in ext["entities"] if not e["proposed"]} - ignore
-    actors = set(ext["actors"]) - ignore
-    return cats, entities, actors
-
-
-def assign_thread(row: dict[str, Any], coded: list[dict[str, Any]], cfg: dict[str, Any]) -> str:
-    """Return the thread_id of the best-matching recent story, or a new thread id.
-
-    A candidate must share a category and be within the thread window. Score: 2 per shared
-    entity, 1 per shared actor (broad actors ignored). Reviewers can re-thread by hand.
-    """
-    coding = cfg["coding"]
-    ignore = set(coding.get("thread_ignore_actors", []))
-    window = timedelta(days=int(coding.get("thread_window_days", 10)))
-    when = datetime.fromisoformat(row["published"])
-    cats, entities, actors = thread_keys(row, ignore)
-    best_score, best_thread = 0, ""
-    for other in coded:
-        if not other["extraction"]["relevant"] or other["story_id"] == row["story_id"]:
-            continue
-        if abs(when - datetime.fromisoformat(other["published"])) > window:
-            continue
-        o_cats, o_entities, o_actors = thread_keys(other, ignore)
-        if not cats & o_cats:
-            continue
-        score = 2 * len(entities & o_entities) + len(actors & o_actors)
-        if score > best_score:
-            best_score, best_thread = score, other["thread_id"]
-    if best_score >= int(coding.get("thread_min_score", 2)):
-        return best_thread
-    return f"t-{row['story_id']}"
-
-
 # --- Coding one story ----------------------------------------------------------------------
 
 
@@ -161,7 +123,7 @@ def story_input(article: dict[str, str], outlet: dict[str, str], max_chars: int)
 
 def code_story(cfg: dict[str, Any], client: Any, instructions: str, article: dict[str, str],
                link: dict[str, str], outlet: dict[str, str], copies: list[dict[str, str]],
-               known_ids: set[str], coded: list[dict[str, Any]]) -> dict[str, Any]:
+               known_ids: set[str]) -> dict[str, Any]:
     """Code one story and return the full row; raises ai_client.AIError on failure."""
     extraction, model = ai_client.parse_structured(
         cfg, client, cfg["coding"]["model_env"], instructions,
@@ -170,6 +132,7 @@ def code_story(cfg: dict[str, Any], client: Any, instructions: str, article: dic
     warnings = correct_actors(extraction, known_ids)
     row: dict[str, Any] = {
         "story_id": article["story_id"],
+        "event_id": "",
         "thread_id": "",
         "coded_at": config.iso(config.now(cfg), cfg),
         "model": model,
@@ -186,7 +149,6 @@ def code_story(cfg: dict[str, Any], client: Any, instructions: str, article: dic
         "actor_warnings": warnings,
         "extraction": extraction.model_dump(),
     }
-    row["thread_id"] = assign_thread(row, coded, cfg) if extraction.relevant else ""
     return row
 
 
@@ -210,8 +172,8 @@ def rewrite_rows(path: Path, rows: list[dict[str, Any]]) -> None:
     tmp.replace(path)
 
 
-def refresh_severity(path: Path, coded: list[dict[str, Any]], copies: dict[str, list[dict[str, str]]]) -> int:
-    """Recompute copy facts and severity for coded stories that gained copies; return changes."""
+def refresh_copy_facts(coded: list[dict[str, Any]], copies: dict[str, list[dict[str, str]]]) -> int:
+    """Recompute copy facts for coded stories that gained copies, in place; return changes."""
     changed = 0
     for row in coded:
         story_rows = copies.get(row["story_id"])
@@ -220,6 +182,13 @@ def refresh_severity(path: Path, coded: list[dict[str, Any]], copies: dict[str, 
         ext = row["extraction"]
         row.update(copy_facts(story_rows, ext["top_tier"], ext["relevant"]))
         changed += 1
+    return changed
+
+
+def regroup_file(path: Path, coded: list[dict[str, Any]], copies: dict[str, list[dict[str, str]]],
+                 cfg: dict[str, Any]) -> int:
+    """Refresh copy facts, regroup events and threads, rewrite the file if anything changed."""
+    changed = refresh_copy_facts(coded, copies) + grouping.regroup(coded, copies, cfg)
     if changed:
         rewrite_rows(path, coded)
     return changed
@@ -294,21 +263,26 @@ def published_since(story_ids: list[str], copies: dict[str, list[dict[str, str]]
 
 
 def run(cfg: dict[str, Any], client: Any = None, limit: int | None = None, recode_stale: bool = False,
-        since: datetime | None = None) -> int:
-    """Code pending stories and refresh severity; return how many stories were coded.
+        since: datetime | None = None, group_only: bool = False) -> int:
+    """Code pending stories, then regroup all coded stories; return how many were coded.
 
     With since, only stories with a copy published at or after that time are coded, so a
     backlog does not crowd out the stories the next brief needs.
 
     With recode_stale, only stories coded under an older codebook version are recoded; each
     old row is replaced only when its recode succeeds, so a failure keeps the old row.
+
+    With group_only, nothing is coded: copy facts, events, threads and severity are refreshed.
     """
     links = read_csv(config.path(cfg, "links_csv"))
     links_by_id = {l["link_id"]: l for l in links}
     copies = story_copies(links)
     coded_path = config.path(cfg, "coded_jsonl")
     coded = read_coded(coded_path)
-    refreshed = refresh_severity(coded_path, coded, copies)
+    if group_only:
+        changed = regroup_file(coded_path, coded, copies, cfg)
+        log.info("Regrouped %d coded stories, %d rows changed", len(coded), changed)
+        return 0
 
     articles = latest_articles(read_csv(config.path(cfg, "articles_csv")))
     by_story: dict[str, list[dict[str, str]]] = defaultdict(list)
@@ -338,7 +312,7 @@ def run(cfg: dict[str, Any], client: Any = None, limit: int | None = None, recod
         link = links_by_id.get(article["link_id"], {})
         try:
             row = code_story(cfg, client, instructions, article, link, outlets.get(article["outlet_id"], {}),
-                             copies.get(story_id, [link] if link else []), known_ids, coded)
+                             copies.get(story_id, [link] if link else []), known_ids)
         except ai_client.SpendCapHit:
             log.error("Spend cap hit; coding stopped after %d stories", len(new_rows))
             break
@@ -353,11 +327,12 @@ def run(cfg: dict[str, Any], client: Any = None, limit: int | None = None, recod
             coded.append(row)
         new_rows.append(row)
 
+    regrouped = regroup_file(coded_path, coded, copies, cfg)
     if new_rows:
         write_check_file(config.path(cfg, "coding_check_md"), new_rows)
     relevant = sum(r["extraction"]["relevant"] for r in new_rows)
-    log.info("Coded %d stories (%d relevant), %d failed, %d severities refreshed",
-             len(new_rows), relevant, failed, refreshed)
+    log.info("Coded %d stories (%d relevant), %d failed, %d rows regrouped",
+             len(new_rows), relevant, failed, regrouped)
     return len(new_rows)
 
 
@@ -369,10 +344,12 @@ def main() -> None:
                         help="recode only stories coded under an older codebook version")
     parser.add_argument("--since", type=datetime.fromisoformat,
                         help="code only stories published at or after this ISO time (with offset)")
+    parser.add_argument("--group-only", action="store_true",
+                        help="code nothing; refresh events, threads and severity of coded stories")
     args = parser.parse_args()
     cfg = config.get_config()
     config.setup_logging(SCRIPT, cfg)
-    run(cfg, limit=args.limit, recode_stale=args.recode_stale, since=args.since)
+    run(cfg, limit=args.limit, recode_stale=args.recode_stale, since=args.since, group_only=args.group_only)
 
 
 if __name__ == "__main__":

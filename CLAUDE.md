@@ -71,10 +71,15 @@ the handover (e.g. Ivica Dačić caretaker interior minister).
   no user-level data. No Instagram, Threads or TikTok. No Meta Content Library.
 - **Duplicates:** keep every copy (copies measure reach), group copies of one story under
   one `story_id`, code each story once.
+- **Events (decided 10 Nov):** `story_id` only joins copies with matching headlines, so
+  `grouping.py` also groups same-event stories under an `event_id` (within 2 days, shared
+  category, similar English summaries; no AI calls). Severity is computed per event across
+  all copies of its stories, and the transition timeline has one entry per event.
 - **Threads:** a running issue that returns over several days (e.g. the NIS/OFAC licence,
-  a dismissal demand that is later met) gets a `thread_id` linking its stories across
-  days. Threads feed the transition timeline and "since the last brief"; a reviewer can
-  merge or split threads.
+  a dismissal demand that is later met) gets a `thread_id` linking its events across
+  days (shared named people or bodies). Threads feed the brief's developments and "since
+  the last brief"; a reviewer can merge or split threads. Events and threads are
+  recomputed from all coded rows on every run of `3_code_stories.py`.
 - **Paywalls:** keep the headline and any free text, set `text_status = partial`. Never try
   to get around paywalls or consent walls.
 - **Collection routes (decided 30 Oct):** per outlet, RSS first, then the outlet's news
@@ -185,7 +190,7 @@ safely: it skips items already done.
 |---|---|---|
 | `1_collect_press.py` | RSS, news sitemaps and Google News per outlet and language, date filter, crediting to the original outlet, story grouping | `data/links.csv` |
 | `2_extract_text.py` | Headline triage of new stories with the coding model (recall-first), then fetch the best copies of possibly relevant stories, extract text (trafilatura), detect junk and language | `data/triage.csv`, `data/articles.csv` |
-| `3_code_stories.py` | AI coding against the codebook, structured outputs, one row per story; then computes severity from the story group and assigns `thread_id` | `data/coded.jsonl` |
+| `3_code_stories.py` | AI coding against the codebook, structured outputs, one row per story; then regroups all coded stories into events and threads (`grouping.py`) and computes severity per event (`--group-only` regroups without coding) | `data/coded.jsonl` |
 | `4_draft_brief.py` | Daily brief and alert focus box from the day's coded stories, stronger model, cites story ids | `review/brief_YYYY-MM-DD.md` |
 | `5_build_trackers.py` | Resignations, emerging leaders, transition timeline, institutions watchlist, external reactions from entity rows | `data/trackers.json` |
 | `6_export_for_web.py` | Build `docs/data.js` from approved briefs, trackers and coded summaries; no text or quotes | `docs/data.js` |
@@ -282,7 +287,7 @@ The same gate applies to the weekly digest.
 ## Repository layout
 
 ```
-CLAUDE.md  README.md  .gitignore  config.yaml  config.py  http_client.py  ai_client.py
+CLAUDE.md  README.md  .gitignore  config.yaml  config.py  http_client.py  ai_client.py  grouping.py
 outlets.csv  actors.csv
 codebook.md  codebook.py  validation_report.md
 1_collect_press.py  2_extract_text.py  3_code_stories.py  4_draft_brief.py
@@ -322,7 +327,7 @@ stage 2 onwards are moved back by about four working days.
 - [x] `codebook.md` v0.1 and `codebook.py` with the schema above — 30 Oct (v0.1.0; severity rule and actor-id check in `codebook.py`; `tests/test_codebook.py` keeps the two files in sync)
 - [x] `1_collect_press.py` written from scratch with Serbian sources and story grouping — 30 Oct (first live run: ~2,500 links, ~2,200 stories, 85 s; shared polite client in `http_client.py`)
 - [x] `2_extract_text.py` written from scratch — 30 Oct (headline triage before fetching, decided 30 Oct to keep coding volume within budget; live text test 39/40 full; first live triage 2 Nov: 5,701 stories, 2,157 passed, 38%)
-- [x] `3_code_stories.py` with structured outputs, script-computed severity and `thread_id`; coded 30 stories and eyeballed them — 2 Nov (0 failed; real cost about $0.004 a story, token use now logged by `ai_client.py`; `relevant` was too narrow and was widened in prompt 0.1.1 / codebook 0.1.2: no hand-coded sample existed, so no `10_validate.py` numbers; informal before/after on the 15 rejected stories: 9 flipped to relevant, including NIS/OFAC. Not reviewer-checked. Open issue: same event under different headlines splits into several `story_id`s, so severity differs between them, e.g. RIK results at 3 and 1)
+- [x] `3_code_stories.py` with structured outputs, script-computed severity and `thread_id`; coded 30 stories and eyeballed them — 2 Nov (0 failed; real cost about $0.004 a story, token use now logged by `ai_client.py`; `relevant` was too narrow and was widened in prompt 0.1.1 / codebook 0.1.2: no hand-coded sample existed, so no `10_validate.py` numbers; informal before/after on the 15 rejected stories: 9 flipped to relevant, including NIS/OFAC. Not reviewer-checked. Open issue, fixed 10 Nov by `event_id`: same event under different headlines split into several `story_id`s, so severity differed between them, e.g. RIK results at 3 and 1)
 - [ ] First `ExecutiveBriefings/` stories hand-coded into `data/validation/` as the early sample
   - 2 Nov: not done from the newsletters. As a stopgap Claude coded 30 randomly drawn collected stories from excerpts (`data/validation/hand_codes_claude.csv`), which is not independent validation. Prompt 0.1.2 / codebook 0.1.3 scored category 80%, `top_tier` 90%, `relevant` 90% against them (before: 63%, 77%, 90%), on the sample the fixes were designed from. The 30 coded stories in `data/coded.jsonl` predate these versions and need recoding. A reviewer still needs to check these codes.
 - [x] `4_draft_brief.py` producing the brief and the alert focus box with story ids — 2 Nov (stories consolidated by thread; the model writes and merges focus lines, severity and rank stay script-computed across the cited stories; 396 coded, 4 failed on the 25-word quote limit and retry next run; first draft in `review/brief_2026-11-02.md`, numbers and names traced to sources)
@@ -336,7 +341,7 @@ Done when: a reviewer has approved one real morning brief and it is visible at t
 - 3 Nov, added at the team's request: media-independence strand. `actors.csv` gains Nova (daily), Radar, ANN, Alpac Capital, the Nova/Radar union, UNS, Jovan Memedović and Olivera Kovačević (`status: confirmed`); Student List aliases extended. `outlets.csv` gains the Student List site and UNS as `primary_nonstate`. Codebook 0.2.0 / prompt 0.2.0: `stage` field, `sued` action, media decisions in scope (numbers in the `codebook.md` change log). Stories coded before 0.2.0 have no `stage` and should be recoded before `5_build_trackers.py` relies on it.
 
 - [x] `5_build_trackers.py`: resignation and dismissal tracker, emerging leaders, transition timeline from entity rows — 3 Nov (all coded rows recoded to 0.2.0 first via `3_code_stories.py --recode-stale`; `--since` codes the next brief's window before the backlog, about 1,900 older triaged stories still uncoded. Proposed names go to `pending_review` in `trackers.json`, never into a tracker; entries carry the actor's `seed`/`confirmed` status. Open: whether seed actors may appear on the page before sign-off; emerging leaders ranks by coverage growth and so includes incumbents; the prior-week comparison is empty until about 9 Nov.) 3 Nov: `6_export_for_web.py` exports the three trackers, cut at the end of the latest approved brief's window, without story ids, thread ids or `pending_review`; `web/index.html` shows timeline, resignation tracker and emerging leaders, with a note while names are still seed actors. Checked headless at 390 px dark and 1100 px light: no script errors, no sideways scroll. Published with the 10 Nov brief after the team agreed to show seed actors with the "not confirmed" note (10 Nov). The timeline repeats the same event under several headlines (the open story-splitting issue).
-- [ ] Fix story splitting before stage 3: merge same-event stories (e.g. within a thread) before computing severity, so one event has one severity and one timeline entry
+- [x] Fix story splitting before stage 3: merge same-event stories before computing severity, so one event has one severity and one timeline entry — 10 Nov (`grouping.py`: `event_id` from summary similarity, IDF-weighted, at least 3 shared content words, threshold 0.2 chosen by reading sampled pairs; threads now chain events and are recomputed in date order every run, since coding out of order had left most same-issue stories unthreaded. On 1,154 relevant stories: 637 events, 351 threads (was 565); the RIK rerun results are one timeline entry of 21 stories instead of about eight; 383 stories rose in severity (mostly 1 to 2 or 3) by sharing their event's corroboration. Sampled merges were correct; some same-event headline-only stories still stand alone. Not reviewer-checked. Threads are broad: the largest (151 stories) joins Alta banka with other organised-crime prosecutor stories through the shared TOK entity. `codebook.md` still describes severity per story; reword it at the next codebook version.)
 - [ ] Article list panel with search and filters (category, actor, outlet group, date)
 - [ ] Method notes panel: sources, codebook version, known gaps, takedown contact
 - [ ] Page checked at phone width and in dark mode

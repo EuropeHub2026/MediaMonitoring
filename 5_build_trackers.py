@@ -4,8 +4,9 @@ Built only from coded entity rows and story categories in `data/coded.jsonl` (CL
 Codebook rules). Only relevant stories count. Names the model proposed (`proposed: true`)
 never enter a tracker: they go to a `pending_review` list instead, so a reviewer can add them
 to `actors.csv`. Every tracker entry carries the actor's `status` from `actors.csv` (`seed`
-or `confirmed`) so the web export can decide what to show. Severity of a timeline entry is
-computed across all copies of its thread's stories, as in the brief.
+or `confirmed`) so the web export can decide what to show. The timeline has one entry per
+event (`event_id` from grouping.py), so one event reported under several headlines appears
+once, with severity computed across all copies of its stories.
 
 Evidence quotes and article text are never written to the output.
 """
@@ -138,15 +139,15 @@ def emerging_leaders(stories: list[dict[str, Any]], actors: dict[str, dict[str, 
 
 
 def transition_timeline(stories: list[dict[str, Any]], copies: dict[str, list[dict[str, str]]]) -> list[dict[str, Any]]:
-    """Transition milestones, one entry per thread, dated by its first story, oldest first."""
+    """Transition milestones, one entry per event, dated by its first story, oldest first."""
     milestones = [s for s in stories
                   if "transition_milestone" in (s["extraction"]["category"], s["extraction"]["secondary_category"])]
     entries = []
-    for dev in brief.consolidate(milestones, copies):
+    for dev in brief.consolidate(milestones, copies, key="event_id"):
         lead = dev.lead
         stages = {e["stage"] for _, e in entity_rows(dev.stories)}
         entries.append({
-            "thread_id": dev.key, "date": min(s["published"] for s in dev.stories),
+            "event_id": dev.key, "thread_id": dev.lead.get("thread_id", ""), "date": min(s["published"] for s in dev.stories),
             "last_update": max(s["published"] for s in dev.stories),
             "title": lead["title"], "summary": lead["extraction"]["summary"],
             "why_it_matters": lead["extraction"]["why_it_matters"],

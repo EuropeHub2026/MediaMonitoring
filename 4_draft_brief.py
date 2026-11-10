@@ -1,8 +1,9 @@
 """Stage 1 brief: draft the daily brief and alert focus box from coded stories.
 
 Coded stories in the window are consolidated into developments: stories sharing a
-`thread_id` count as one development, so one event under several headlines appears once and
-its severity is computed across all its copies. The stronger model writes the brief items
+`thread_id` (a running issue, a chain of same-event groups from grouping.py) count as one
+development, so one event under several headlines appears once and its severity is computed
+across all its copies. The stronger model writes the brief items
 and the focus box lines from the developments and must cite their story ids; it can merge
 what threading missed. Severity and rank in the focus box are computed by script from the
 cited stories, never by the model, and only alert-category stories qualify. The output is review/brief_YYYY-MM-DD.md with
@@ -146,11 +147,12 @@ def consolidate_one(key: str, members: list[dict[str, Any]],
                        sorted({c["outlet_id"] for c in rows}))
 
 
-def consolidate(stories: list[dict[str, Any]], copies: dict[str, list[dict[str, str]]]) -> list[Development]:
-    """Group stories by thread and compute each development's severity across all copies."""
+def consolidate(stories: list[dict[str, Any]], copies: dict[str, list[dict[str, str]]],
+                key: str = "thread_id") -> list[Development]:
+    """Group stories by `key` (thread or event) and compute each group's severity across all copies."""
     groups: dict[str, list[dict[str, Any]]] = {}
     for story in stories:
-        groups.setdefault(story["thread_id"] or story["story_id"], []).append(story)
+        groups.setdefault(story.get(key) or story["story_id"], []).append(story)
     developments = [consolidate_one(key, members, copies) for key, members in groups.items()]
     return sorted(developments, key=lambda d: (-d.severity, -len(d.outlets), d.key))
 
