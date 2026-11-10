@@ -154,6 +154,18 @@ def test_evidence_quote_blocks_publication(cfg: dict) -> None:
     assert not Path(cfg["paths"]["docs_dir"]).exists()
 
 
+def test_quote_equal_to_own_headline_does_not_block(cfg: dict) -> None:
+    """Headline-only stories quote their headline, which may be published."""
+    write_brief(cfg)
+    path = Path(cfg["paths"]["review_dir"]) / "brief_2026-11-02.md"
+    headline = "Danas se ponavljaju izbori na 53 biracka mesta"
+    path.write_text(path.read_text(encoding="utf-8").replace("First paragraph.", headline), encoding="utf-8")
+    Path(cfg["paths"]["coded_jsonl"]).write_text(
+        json.dumps({"title": headline, "extraction": {"evidence_quote": headline}}) + "\n", encoding="utf-8")
+    publish.run(cfg, date(2026, 11, 2), do_commit=False)
+    assert (Path(cfg["paths"]["docs_dir"]) / "data.js").exists()
+
+
 def tracker_src(day: str, story: str = "20261101-a") -> dict:
     return {"story_id": story, "published": f"{day}T10:00:00+01:00", "title": "Naslov",
             "url": "https://x.test/t", "outlet_id": "rik", "severity": 2}
