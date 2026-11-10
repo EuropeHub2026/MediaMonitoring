@@ -35,9 +35,14 @@ class Client:
         self.items, self.kwargs = items, None
         self.focus = [brief.FocusLine(line="Alert.", story_ids=["a"])] if focus is None else focus
         self.responses = self
+        self.catch_up_items: list[brief.BriefItem] = []
 
     def parse(self, **kwargs):
         self.kwargs = kwargs
+        if kwargs["text_format"] is brief.CatchUp:
+            self.catch_up_kwargs = kwargs
+            return SimpleNamespace(output_parsed=brief.CatchUp(items=self.catch_up_items))
+        self.brief_kwargs = kwargs
         return SimpleNamespace(output_parsed=brief.Brief(items=self.items, focus=self.focus))
 
 
@@ -181,3 +186,39 @@ def test_failed_call_writes_nothing(cfg: dict) -> None:
 def test_weekend_skipped_unless_forced(cfg: dict) -> None:
     write_inputs(cfg)
     assert brief.run(cfg, Client([item("a")]), date(2026, 11, 1)) is None
+
+
+def write_gap_inputs(cfg: dict) -> None:
+    import json
+    rows = [story("a", top=True), story("old", published="2026-10-30T10:00:00+01:00"),
+            story("older", published="2026-10-20T10:00:00+01:00")]
+    with open(cfg["paths"]["coded_jsonl"], "w", encoding="utf-8") as fh:
+        fh.writelines(json.dumps(r) + "\n" for r in rows)
+    with open(cfg["paths"]["links_csv"], "w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, ["link_id", "story_id", "outlet_group", "outlet_id"])
+        writer.writeheader()
+        for n, sid in enumerate(["a", "old", "older"]):
+            writer.writerow({"link_id": str(n), "story_id": sid, "outlet_group": "official", "outlet_id": "rik"})
+
+
+def test_window_start_override_and_catch_up(cfg: dict) -> None:
+    write_gap_inputs(cfg)
+    client = Client([item("a")])
+    client.catch_up_items = [brief.BriefItem(headline="Gap event", paragraph="P.", why_it_matters="W.",
+                                             story_ids=["old"])]
+    start = datetime(2026, 11, 1, 0, 0, tzinfo=UTC)
+    path = brief.run(cfg, client, date(2026, 11, 2), start=start,
+                     catch_up_from=datetime(2026, 10, 25, tzinfo=UTC))
+    text = path.read_text(encoding="utf-8")
+    assert "window_start: 2026-11-01T01:00:00+01:00" in text and "catch_up_start:" in text
+    assert text.index("## Daily brief") < text.index("## Catch-up") < text.index("### Gap event")
+    assert "id old" in client.catch_up_kwargs["input"] and "id older" not in client.catch_up_kwargs["input"]
+    assert "id old" not in client.brief_kwargs["input"]
+
+
+def test_catch_up_with_unknown_id_writes_nothing(cfg: dict) -> None:
+    write_gap_inputs(cfg)
+    client = Client([item("a")])
+    client.catch_up_items = [item("a")]
+    assert brief.run(cfg, client, date(2026, 11, 2), start=datetime(2026, 11, 1, tzinfo=UTC),
+                     catch_up_from=datetime(2026, 10, 25, tzinfo=UTC)) is None

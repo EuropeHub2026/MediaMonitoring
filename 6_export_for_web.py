@@ -85,10 +85,15 @@ def parse_items(text: str, names: dict[str, str]) -> list[dict[str, Any]]:
 def parse_brief(text: str, names: dict[str, str]) -> dict[str, Any]:
     """One approved brief as page data."""
     meta, body = split_front_matter(text)
-    return {"date": meta["date"], "reviewed_by": meta["reviewed_by"],
+    has_catch_up = "\n## Catch-up" in body
+    data = {"date": meta["date"], "reviewed_by": meta["reviewed_by"],
             "window_start": meta.get("window_start", ""), "window_end": meta.get("window_end", ""),
             "focus": parse_focus(section(body, "Alert focus box", "Daily brief"), names),
-            "items": parse_items(section(body, "Daily brief", None), names)}
+            "items": parse_items(section(body, "Daily brief", "Catch-up" if has_catch_up else None), names)}
+    if has_catch_up:
+        data["catch_up"] = {"start": meta.get("catch_up_start", ""), "end": data["window_start"],
+                            "items": parse_items(section(body, "Catch-up", None), names)}
+    return data
 
 
 def read_outlets(cfg: dict[str, Any]) -> list[dict[str, str]]:

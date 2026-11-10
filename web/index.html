@@ -118,6 +118,21 @@ td.num { font-family: var(--data); text-align: right; white-space: nowrap; }
     });
     return section;
   }
+  function catchUpPanel(brief) {
+    var c = brief.catch_up, section = el("section");
+    section.append(el("h2", "", "Catch-up"),
+      el("p", "src", "Developments from " + shortDate(c.start) + " to " + shortDate(c.end) +
+        ", when no brief was published. Coverage of this period is incomplete; see known gaps in the method notes."));
+    c.items.forEach(function (item) {
+      var art = el("article");
+      art.append(el("h3", "", item.headline));
+      item.paragraphs.forEach(function (p) { art.append(el("p", "", p)); });
+      var why = el("p", "why"); why.append(el("b", "", "Why it matters: "), item.why);
+      art.append(why, sourcesLine(item.sources));
+      section.append(art);
+    });
+    return section;
+  }
   var T = data.trackers;
   function shortDate(iso) {
     return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: data.timezone });
@@ -268,6 +283,7 @@ td.num { font-family: var(--data); text-align: right; white-space: nowrap; }
       pick.append(select); nodes.push(pick);
     }
     nodes.push(focusPanel(brief), briefPanel(brief));
+    if (brief.catch_up && brief.catch_up.items.length) nodes.push(catchUpPanel(brief));
     nodes.push.apply(nodes, trackerPanels());
     nodes.push(methodPanel());
     app.replaceChildren.apply(app, nodes);

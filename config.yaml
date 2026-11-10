@@ -112,6 +112,9 @@ brief:
   max_items: 8
   max_input_developments: 60   # the most severe and widely reported go to the model
   focus_max_items: 12
+  # Catch-up section after a pause in briefing (4_draft_brief.py --catch-up-from).
+  catch_up_min_items: 3
+  catch_up_max_items: 5
 
 # Shown in the method notes on the page. This file is public.
 method:
@@ -120,6 +123,7 @@ method:
     - "AP, Reuters, Tanjug and Bloomberg are represented by headlines only."
     - "Paywalled articles are represented by their free text."
     - "Coverage of 31 October 2026 is thinner than other days."
+    - "No briefs were published from 4 to 6 November 2026, and collection paused from 5 to 8 November. Briefs restarted with the window from Monday 9 November. Stories from the pause were collected on 10 November from what news feeds and searches still carried, so coverage of 5 to 8 November is thinner than other days and some stories from it may be missing."
     - "Only the most widely reported stories are coded each day."
 
 # Stage 4 and 5. Collectors read accounts and pages from these lists only.

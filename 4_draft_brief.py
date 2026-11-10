@@ -8,6 +8,10 @@ what threading missed. Severity and rank in the focus box are computed by script
 cited stories, never by the model, and only alert-category stories qualify. The output is review/brief_YYYY-MM-DD.md with
 `status: draft`; a reviewer edits and approves it. An existing brief is never overwritten.
 
+After a pause in briefing, `--window-start` restarts the window at a set time instead of the
+end of the last approved brief, and `--catch-up-from` adds a short "Catch-up" section on the
+gap (from that time to the window start), written the same way but without a focus box.
+
 Evidence quotes and article text are never passed to the brief or written to the draft.
 """
 
@@ -29,7 +33,7 @@ import codebook
 import config
 
 SCRIPT = "4_draft_brief"
-BRIEF_PROMPT_VERSION = "0.1.1"
+BRIEF_PROMPT_VERSION = "0.2.0"
 WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 MONDAY_LOOKBACK_HOURS = 72
 
@@ -61,6 +65,13 @@ class Brief(BaseModel):
     model_config = ConfigDict(extra="forbid")
     items: list[BriefItem]
     focus: list[FocusLine]
+
+
+class CatchUp(BaseModel):
+    """The main developments of a period with no brief, most important first."""
+
+    model_config = ConfigDict(extra="forbid")
+    items: list[BriefItem]
 
 
 @dataclass
@@ -175,6 +186,20 @@ Rules:
 Also write focus: up to {focus_max} alert items since the last brief, from material with an alert category. Each is one factual sentence stating the current position, not a past one (if a vote has since happened, report the outcome). Each distinct event appears once: merge all material on it and cite all its story ids. Do not rank them or give a severity. Attribute allegations in the same way."""
 
 
+def catch_up_instructions(min_items: int, max_items: int) -> str:
+    """The system prompt for the catch-up section on a period with no brief."""
+    return f"""You write a short catch-up on political change in Serbia after the 25 October 2026 parliamentary election, covering a period when no brief was published, for business people and international officials who do not read Serbian media. Answer in English.
+
+Choose {min_items} to {max_items} developments of that period that a reader still needs to know about, most important first, from the numbered material. Prefer formal steps, changes of post, legal action and matters of state over commentary. Merge material about the same event into one item. Coverage of the period is incomplete, so do not describe anything as the only or the main event of the period.
+
+Rules:
+- Use only the supplied material. Add no facts, dates, names, numbers or background of your own.
+- One short paragraph per item, plain and neutral, with the date where the material gives it. Attribute every accusation to whoever made it and give the response if the material has one. An allegation is never stated as fact.
+- Where sources are from one outlet group only, say the report comes from that side of the media.
+- why_it_matters is one sentence for an outsider, and must follow from the material.
+- story_ids must list only ids from the material, at least one per item."""
+
+
 def development_input(devs: list[Development]) -> str:
     """Numbered material for the model: summaries only, no article text or evidence quotes."""
     blocks = []
@@ -199,13 +224,34 @@ def draft_items(cfg: dict[str, Any], client: Any, devs: list[Development]) -> tu
         development_input(devs), Brief,
     )
     known = {s["story_id"] for d in devs for s in d.stories}
-    if not wanted_min <= len(brief.items) <= wanted_max:
-        raise ai_client.AIError(f"brief has {len(brief.items)} items, wanted {wanted_min} to {wanted_max}")
-    for label, ids in [(i.headline, i.story_ids) for i in brief.items] + [(f.line, f.story_ids) for f in brief.focus]:
-        unknown = set(ids) - known
-        if unknown or not ids:
-            raise ai_client.AIError(f"{label!r} cites bad story ids: {sorted(unknown) or 'none given'}")
+    check_items(brief.items, known, wanted_min, wanted_max)
+    for focus in brief.focus:
+        unknown = set(focus.story_ids) - known
+        if unknown or not focus.story_ids:
+            raise ai_client.AIError(f"{focus.line!r} cites bad story ids: {sorted(unknown) or 'none given'}")
     return brief, model
+
+
+def check_items(items: list[BriefItem], known: set[str], wanted_min: int, wanted_max: int) -> None:
+    """Raise AIError if the item count is out of range or an item cites no or unknown story ids."""
+    if not wanted_min <= len(items) <= wanted_max:
+        raise ai_client.AIError(f"{len(items)} items, wanted {wanted_min} to {wanted_max}")
+    for entry in items:
+        unknown = set(entry.story_ids) - known
+        if unknown or not entry.story_ids:
+            raise ai_client.AIError(f"{entry.headline!r} cites bad story ids: {sorted(unknown) or 'none given'}")
+
+
+def draft_catch_up(cfg: dict[str, Any], client: Any, devs: list[Development]) -> list[BriefItem]:
+    """Ask the model for the catch-up items and check them; raise AIError if wrong."""
+    wanted_max = int(cfg["brief"].get("catch_up_max_items", 5))
+    wanted_min = min(int(cfg["brief"].get("catch_up_min_items", 3)), len(devs))
+    catch_up, _ = ai_client.parse_structured(
+        cfg, client, cfg["coding"]["brief_model_env"], catch_up_instructions(wanted_min, wanted_max),
+        development_input(devs), CatchUp,
+    )
+    check_items(catch_up.items, {s["story_id"] for d in devs for s in d.stories}, wanted_min, wanted_max)
+    return catch_up.items
 
 
 def source_lines(stories: list[dict[str, Any]], limit: int = 4) -> list[str]:
@@ -216,14 +262,29 @@ def source_lines(stories: list[dict[str, Any]], limit: int = 4) -> list[str]:
     return [f"[{outlet}]({url})" for outlet, url in list(seen.items())[:limit]]
 
 
+def item_lines(items: list[BriefItem], by_id: dict[str, dict[str, Any]]) -> list[str]:
+    """Markdown for brief or catch-up items."""
+    lines: list[str] = []
+    for item in items:
+        stories = [by_id[s] for s in item.story_ids]
+        lines += [f"### {item.headline}", "", item.paragraph, "",
+                  f"**Why it matters:** {item.why_it_matters}", "",
+                  f"Sources: {' · '.join(source_lines(stories))}", "",
+                  f"Stories: {', '.join(item.story_ids)}", ""]
+    return lines
+
+
 def render(day: date, start: datetime, end: datetime, model: str, focus: list[tuple[FocusLine, Development]],
-           brief: Brief, by_id: dict[str, dict[str, Any]], counts: dict[str, int], cfg: dict[str, Any]) -> str:
+           brief: Brief, by_id: dict[str, dict[str, Any]], counts: dict[str, int], cfg: dict[str, Any],
+           catch_up: tuple[datetime, list[BriefItem]] | None = None) -> str:
     """The draft as Markdown with `status: draft` front matter."""
     lines = ["---", "status: draft", "reviewed_by:", f"date: {day.isoformat()}",
-             f"window_start: {config.iso(start, cfg)}", f"window_end: {config.iso(end, cfg)}",
-             f"model: {model}", f"brief_prompt_version: {BRIEF_PROMPT_VERSION}",
-             f"codebook_version: {codebook.CODEBOOK_VERSION}",
-             f"stories_in_window: {counts['stories']}", f"developments: {counts['developments']}", "---", "",
+             f"window_start: {config.iso(start, cfg)}", f"window_end: {config.iso(end, cfg)}"]
+    if catch_up:
+        lines.append(f"catch_up_start: {config.iso(catch_up[0], cfg)}")
+    lines += [f"model: {model}", f"brief_prompt_version: {BRIEF_PROMPT_VERSION}",
+              f"codebook_version: {codebook.CODEBOOK_VERSION}",
+              f"stories_in_window: {counts['stories']}", f"developments: {counts['developments']}", "---", "",
              f"# Brief for {day:%A %-d %B %Y}", "", "## Alert focus box", ""]
     if not focus:
         lines += ["No alert items in this window.", ""]
@@ -232,18 +293,19 @@ def render(day: date, start: datetime, end: datetime, model: str, focus: list[tu
         lines.append(f"  - {len(dev.outlets)} outlets: {', '.join(dev.outlet_groups)}")
         lines.append(f"  - Sources: {' · '.join(source_lines(dev.stories))}")
         lines.append(f"  - Stories: {', '.join(s['story_id'] for s in dev.stories)}")
-    lines += ["", "## Daily brief", ""]
-    for item in brief.items:
-        stories = [by_id[s] for s in item.story_ids]
-        lines += [f"### {item.headline}", "", item.paragraph, "",
-                  f"**Why it matters:** {item.why_it_matters}", "",
-                  f"Sources: {' · '.join(source_lines(stories))}", "",
-                  f"Stories: {', '.join(item.story_ids)}", ""]
+    lines += ["", "## Daily brief", ""] + item_lines(brief.items, by_id)
+    if catch_up:
+        lines += ["## Catch-up", ""] + item_lines(catch_up[1], by_id)
     return "\n".join(lines)
 
 
-def run(cfg: dict[str, Any], client: Any = None, day: date | None = None, force_day: bool = False) -> Path | None:
-    """Write the draft for one date; return its path, or None if nothing was written."""
+def run(cfg: dict[str, Any], client: Any = None, day: date | None = None, force_day: bool = False,
+        start: datetime | None = None, catch_up_from: datetime | None = None) -> Path | None:
+    """Write the draft for one date; return its path, or None if nothing was written.
+
+    `start` overrides the window start; with `catch_up_from`, stories from then until the
+    window start are drafted into a catch-up section.
+    """
     now = config.now(cfg)
     day = day or now.date()
     if not force_day and WEEKDAYS[day.weekday()] not in cfg["schedule"]["brief_weekdays"]:
@@ -253,7 +315,7 @@ def run(cfg: dict[str, Any], client: Any = None, day: date | None = None, force_
     if path.exists():
         log.info("%s already exists; left as it is", path)
         return None
-    start = window_start(cfg, day, now)
+    start = start or window_start(cfg, day, now)
     coded = coder.read_coded(config.path(cfg, "coded_jsonl"))
     stories = stories_in_window(coded, start, now)
     if not stories:
@@ -270,8 +332,22 @@ def run(cfg: dict[str, Any], client: Any = None, day: date | None = None, force_
         return None
     by_id = {s["story_id"]: s for s in stories}
     focus = focus_entries(brief, by_id, copies, int(cfg["brief"]["focus_max_items"]))
+    catch_up = None
+    if catch_up_from:
+        gap_stories = [s for s in stories_in_window(coded, catch_up_from, start) if s["story_id"] not in by_id]
+        if gap_stories:
+            gap_devs = consolidate(gap_stories, copies)[: int(cfg["brief"]["max_input_developments"])]
+            try:
+                catch_up = (catch_up_from, draft_catch_up(cfg, client or ai_client.make_client(), gap_devs))
+            except ai_client.AIError as exc:
+                log.error("Catch-up not drafted (%s); no file written", exc)
+                return None
+            by_id.update({s["story_id"]: s for s in gap_stories})
+        else:
+            log.warning("No relevant coded stories between %s and %s; no catch-up section",
+                        catch_up_from.isoformat(), start.isoformat())
     text = render(day, start, now, model, focus, brief, by_id,
-                  {"stories": len(stories), "developments": len(devs)}, cfg)
+                  {"stories": len(stories), "developments": len(devs)}, cfg, catch_up)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
     log.info("Draft %s: %d items, %d focus items from %d stories in %d developments",
@@ -283,10 +359,14 @@ def main() -> None:
     """Command-line entry point."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--date", type=date.fromisoformat, help="brief date (default today); also allows non-brief days")
+    parser.add_argument("--window-start", type=datetime.fromisoformat,
+                        help="start the window here (ISO 8601 with offset) instead of at the last approved brief")
+    parser.add_argument("--catch-up-from", type=datetime.fromisoformat,
+                        help="add a catch-up section on stories from this time to the window start")
     args = parser.parse_args()
     cfg = config.get_config()
     config.setup_logging(SCRIPT, cfg)
-    run(cfg, day=args.date, force_day=args.date is not None)
+    run(cfg, day=args.date, force_day=args.date is not None, start=args.window_start, catch_up_from=args.catch_up_from)
 
 
 if __name__ == "__main__":

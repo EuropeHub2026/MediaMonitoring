@@ -224,3 +224,17 @@ def test_confirmed_actor_is_not_flagged(cfg: dict) -> None:
     write_brief(cfg)
     write_trackers(cfg, actor_status="confirmed")
     assert export.build(cfg)["trackers"]["resignations"][0]["unconfirmed"] is False
+
+
+def test_catch_up_section_is_exported_separately(cfg: dict) -> None:
+    write_brief(cfg)
+    path = Path(cfg["paths"]["review_dir"]) / "brief_2026-11-02.md"
+    text = path.read_text(encoding="utf-8").replace("date: 2026-11-02", "date: 2026-11-02\ncatch_up_start: 2026-10-28T12:00:00+01:00")
+    text += "\n## Catch-up\n\n### Gap item\n\nGap paragraph.\n\n**Why it matters:** Gap.\n\nSources: [rik](https://x.test/9)\n\nStories: s9\n"
+    path.write_text(text, encoding="utf-8")
+    brief = export.build(cfg)["briefs"][0]
+    assert "Gap item" not in [i["headline"] for i in brief["items"]]
+    assert brief["catch_up"]["start"] == "2026-10-28T12:00:00+01:00"
+    assert [i["headline"] for i in brief["catch_up"]["items"]] == ["Gap item"]
+    assert brief["catch_up"]["items"][0]["sources"] == [{"name": "RIK", "url": "https://x.test/9"}]
+    assert "s9" not in json.dumps(brief)

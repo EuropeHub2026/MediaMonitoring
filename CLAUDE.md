@@ -304,6 +304,17 @@ ExecutiveBriefings/  licensed newsletter PDFs, reference only (git-ignored, neve
 
 Working days from Monday 2 November 2026. Tick items as they are done and add the date.
 
+**Pause and restart (decided 10 Nov).** Work stopped after 4 Nov: no briefs for 4 to 6 Nov,
+no collection from 5 to 8 Nov. Briefing restarts with a window from Monday 9 Nov 00:00 CET;
+the first brief after the pause (10 Nov) adds a "Catch-up" section on what was collected
+for the gap (`4_draft_brief.py --window-start ... --catch-up-from ...`). The gap is a known
+gap in `config.yaml` (`method.known_gaps`), shown in the method notes. Dates below from
+stage 2 onwards are moved back by about four working days.
+
+**Seed actors on the page (decided 10 Nov).** Trackers are published while names are still
+`seed`, with the page note that names are not yet confirmed. A reviewer still signs off
+`actors.csv`; confirmed names lose the note.
+
 ### Stage 1 · Press-only brief (days 1 to 2, 2 to 3 Nov)
 
 - [x] Repository, `.devcontainer`, `requirements.txt`, `.gitignore` (`data/`, `review/`, `exports/`, `.env`, `ExecutiveBriefings/`) — 30 Oct
@@ -320,11 +331,12 @@ Working days from Monday 2 November 2026. Tick items as they are done and add th
 
 Done when: a reviewer has approved one real morning brief and it is visible at the Pages URL.
 
-### Stage 2 · Low version (days 3 to 4, 4 to 5 Nov)
+### Stage 2 · Low version (days 3 to 4, 4 to 5 Nov; now 10 to 12 Nov)
 
 - 3 Nov, added at the team's request: media-independence strand. `actors.csv` gains Nova (daily), Radar, ANN, Alpac Capital, the Nova/Radar union, UNS, Jovan Memedović and Olivera Kovačević (`status: confirmed`); Student List aliases extended. `outlets.csv` gains the Student List site and UNS as `primary_nonstate`. Codebook 0.2.0 / prompt 0.2.0: `stage` field, `sued` action, media decisions in scope (numbers in the `codebook.md` change log). Stories coded before 0.2.0 have no `stage` and should be recoded before `5_build_trackers.py` relies on it.
 
-- [x] `5_build_trackers.py`: resignation and dismissal tracker, emerging leaders, transition timeline from entity rows — 3 Nov (all coded rows recoded to 0.2.0 first via `3_code_stories.py --recode-stale`; `--since` codes the next brief's window before the backlog, about 1,900 older triaged stories still uncoded. Proposed names go to `pending_review` in `trackers.json`, never into a tracker; entries carry the actor's `seed`/`confirmed` status. Open: whether seed actors may appear on the page before sign-off; emerging leaders ranks by coverage growth and so includes incumbents; the prior-week comparison is empty until about 9 Nov.) 3 Nov: `6_export_for_web.py` exports the three trackers, cut at the end of the latest approved brief's window, without story ids, thread ids or `pending_review`; `web/index.html` shows timeline, resignation tracker and emerging leaders, with a note while names are still seed actors. Checked headless at 390 px dark and 1100 px light: no script errors, no sideways scroll. Not yet published: waiting for the team to approve showing seed actors. The timeline repeats the same event under several headlines (the open story-splitting issue).
+- [x] `5_build_trackers.py`: resignation and dismissal tracker, emerging leaders, transition timeline from entity rows — 3 Nov (all coded rows recoded to 0.2.0 first via `3_code_stories.py --recode-stale`; `--since` codes the next brief's window before the backlog, about 1,900 older triaged stories still uncoded. Proposed names go to `pending_review` in `trackers.json`, never into a tracker; entries carry the actor's `seed`/`confirmed` status. Open: whether seed actors may appear on the page before sign-off; emerging leaders ranks by coverage growth and so includes incumbents; the prior-week comparison is empty until about 9 Nov.) 3 Nov: `6_export_for_web.py` exports the three trackers, cut at the end of the latest approved brief's window, without story ids, thread ids or `pending_review`; `web/index.html` shows timeline, resignation tracker and emerging leaders, with a note while names are still seed actors. Checked headless at 390 px dark and 1100 px light: no script errors, no sideways scroll. Published with the 10 Nov brief after the team agreed to show seed actors with the "not confirmed" note (10 Nov). The timeline repeats the same event under several headlines (the open story-splitting issue).
+- [ ] Fix story splitting before stage 3: merge same-event stories (e.g. within a thread) before computing severity, so one event has one severity and one timeline entry
 - [ ] Article list panel with search and filters (category, actor, outlet group, date)
 - [ ] Method notes panel: sources, codebook version, known gaps, takedown contact
 - [ ] Page checked at phone width and in dark mode
@@ -332,7 +344,7 @@ Done when: a reviewer has approved one real morning brief and it is visible at t
 
 Done when: the page carries two consecutive approved briefs plus the three trackers, and the link has gone to the first named external readers.
 
-### Stage 3 · PDF extract (day 5, 6 Nov)
+### Stage 3 · PDF extract (day 5, 6 Nov; now 13 Nov)
 
 - [ ] `7_export_pdf.py`: dated PDF of the approved brief, focus box and tracker snapshots with source footnotes
 - [ ] `publish.py` runs it after the web export
@@ -340,7 +352,7 @@ Done when: the page carries two consecutive approved briefs plus the three track
 
 Done when: an external stakeholder has received a PDF generated by the script for that day's approved brief.
 
-### Stage 4 · Open social (days 6 to 8, 9 to 11 Nov)
+### Stage 4 · Open social (days 6 to 8, 9 to 11 Nov; now 16 to 18 Nov)
 
 - [ ] Account and channel lists in `config.yaml` (about 60 X accounts, 15 YouTube channels, 20 Telegram channels) confirmed by the team; include the Student List's official channels
 - [ ] `8_collect_social.py` for X (pay-per-use, spending limit set), YouTube Data API, Telegram public channels
@@ -350,7 +362,7 @@ Done when: an external stakeholder has received a PDF generated by the script fo
 
 Done when: the trends panel shows a full day of X, YouTube and Telegram data and the X spend for the day is within budget.
 
-### Stage 5 · Facebook, light (days 8 to 9, 11 to 12 Nov)
+### Stage 5 · Facebook, light (days 8 to 9, 11 to 12 Nov; now 18 to 19 Nov)
 
 - [ ] Page list (about 20) confirmed by the team
 - [ ] Facebook collector via a pay-per-result Apify actor, once a day, posts and reaction counts only
@@ -358,7 +370,7 @@ Done when: the trends panel shows a full day of X, YouTube and Telegram data and
 
 Done when: Facebook posts from the listed pages appear in the trends panel for one full day.
 
-### Stage 6 · Watchlists and validation (days 9 to 10, 12 to 13 Nov)
+### Stage 6 · Watchlists and validation (days 9 to 10, 12 to 13 Nov; now 19 to 20 Nov)
 
 - [ ] Institutions watchlist and external reactions panels from entity rows
 - [ ] `10_validate.py`: 50 English and 50 Serbian stories hand-coded; targets 80% on category, 80% on `top_tier`, 75% on computed severity within one point, agreement check on entities; Serbian spot check by the Serbian-reading reviewer; results in `validation_report.md` and the method notes
