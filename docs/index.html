@@ -54,6 +54,17 @@ th, td { text-align: left; padding: 7px 6px; border-top: 1px solid var(--line); 
 th { font: 500 .74rem var(--data); color: var(--muted); text-transform: uppercase; letter-spacing: .05em; border-top: 0; }
 td.num { font-family: var(--data); text-align: right; white-space: nowrap; }
 .role { display: block; font-size: .8rem; color: var(--muted); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.filters label { flex: 1 1 150px; flex-direction: column; align-items: stretch; gap: 3px; }
+.filters label.search { flex-basis: 100%; }
+input[type=search] { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); padding: 6px 8px; width: 100%; }
+.filters select { width: 100%; }
+.count { font: .8rem var(--data); color: var(--muted); }
+.item { display: grid; gap: 4px; padding-top: 12px; border-top: 1px solid var(--line); }
+.item h3 { font-family: var(--body); font-weight: 500; font-size: 1rem; overflow-wrap: anywhere; }
+.item .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+button.more { font: inherit; color: var(--accent); background: var(--surface); border: 1px solid var(--line); padding: 8px 12px; cursor: pointer; justify-self: start; }
+dd ul { margin: 4px 0 0; padding-left: 18px; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 </style>
 </head>
@@ -248,19 +259,107 @@ td.num { font-family: var(--data); text-align: right; white-space: nowrap; }
     if (!T) return [];
     return [timelinePanel(), resignationPanel(), leadersPanel()].filter(Boolean);
   }
+  var A = data.articles || [];
+  function options(select, all, values, fmt) {
+    var first = el("option", "", all); first.value = ""; select.append(first);
+    values.forEach(function (v) { var o = el("option", "", fmt ? fmt(v) : v); o.value = v; select.append(o); });
+  }
+  function uniq(get) {
+    var seen = {};
+    A.forEach(function (a) { [].concat(get(a)).forEach(function (v) { seen[v] = true; }); });
+    return Object.keys(seen);
+  }
+  function dayOf(iso) {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: data.timezone }).format(new Date(iso));
+  }
+  function articlePanel() {
+    if (!A.length) return null;
+    var section = el("section", "tracker"), PAGE = 25, shown = PAGE;
+    section.append(el("h2", "", "Article list"),
+      el("p", "note", "Every story coded as relevant, up to the end of the latest approved brief, newest first. Headline, AI summary and link only; the link goes to one copy of the story. Severity is computed across every outlet that reported the event."));
+    var filters = el("div", "filters");
+    function field(text, control, cls) { var l = el("label", cls || "", text); l.append(control); filters.append(l); return control; }
+    var q = field("Search headlines and summaries", el("input"), "search");
+    q.type = "search";
+    var cat = field("Category", el("select")), actor = field("Actor", el("select")),
+        group = field("Outlet group", el("select")), day = field("Date", el("select"));
+    options(cat, "All categories", uniq(function (a) { return a.categories; }).sort(), label);
+    options(actor, "All actors", uniq(function (a) { return a.actors; }).sort(function (x, y) { return x.localeCompare(y); }));
+    options(group, "All outlet groups", uniq(function (a) { return a.outlet_groups; }).sort(), label);
+    options(day, "All dates", uniq(function (a) { return dayOf(a.published); }).sort().reverse(),
+      function (d) { return longDate(d); });
+    var count = el("p", "count"), list = el("div", "tracker"), more = el("button", "more", "Show more");
+    more.type = "button";
+    section.append(filters, count, list, more);
+    function matches(a) {
+      var text = q.value.trim().toLowerCase();
+      return (!text || (a.title + " " + a.summary).toLowerCase().indexOf(text) >= 0) &&
+        (!cat.value || a.categories.indexOf(cat.value) >= 0) &&
+        (!actor.value || a.actors.indexOf(actor.value) >= 0) &&
+        (!group.value || a.outlet_groups.indexOf(group.value) >= 0) &&
+        (!day.value || dayOf(a.published) === day.value);
+    }
+    function render() {
+      var hits = A.filter(matches);
+      count.textContent = hits.length + " of " + A.length + " stories";
+      list.replaceChildren();
+      hits.slice(0, shown).forEach(function (a) {
+        var item = el("div", "item"), h = el("h3"), link = el("a", "", a.title);
+        link.href = a.url; link.rel = "noopener noreferrer"; link.target = "_blank";
+        h.append(link);
+        var meta = el("p", "meta src", shortDate(a.published) + " · " + a.outlet +
+          (a.n_copies > 1 ? " · " + a.n_copies + " copies" : "") + " · ");
+        meta.append(el("span", "sev s" + a.severity, "SEV " + a.severity));
+        var tags = el("p", "tags");
+        a.categories.forEach(function (c) { tags.append(el("span", "tag", label(c))); });
+        item.append(h, meta, el("p", "", a.summary), tags);
+        if (a.actors.length) item.append(el("p", "src", "Actors: " + a.actors.join(", ")));
+        list.append(item);
+      });
+      if (!hits.length) list.append(el("p", "note", "No stories match these filters."));
+      more.hidden = hits.length <= shown;
+    }
+    [q, cat, actor, group, day].forEach(function (c) {
+      c.addEventListener(c === q ? "input" : "change", function () { shown = PAGE; render(); });
+    });
+    more.addEventListener("click", function () { shown += PAGE * 2; render(); });
+    render();
+    return section;
+  }
   function methodPanel() {
     var m = data.method, section = el("section"), dl = el("dl");
     section.append(el("h2", "", "Method notes"));
-    function add(term, text) { dl.append(el("dt", "", term), el("dd", "", text)); }
-    add("How this is made", "Press reports are collected daily, coded by AI against a fixed codebook and drafted into a brief. A team reviewer approves every brief before it appears here.");
-    add("Sources", Object.keys(m.outlets_by_group).map(function (g) { return label(g) + ": " + m.outlets_by_group[g]; }).join("; "));
-    add("Severity", "1: reported by one outlet group. 2: two or more groups, or an official outlet. 3: meets 2 and involves a top-tier post.");
-    add("Codebook", "Version " + m.codebook_version + ", prompt " + m.prompt_version);
+    function add(term, content) {
+      var dd = el("dd");
+      if (typeof content === "string") dd.textContent = content; else dd.append(content);
+      dl.append(el("dt", "", term), dd);
+    }
+    function bullets(items) {
+      var ul = el("ul");
+      items.forEach(function (i) { ul.append(el("li", "", i)); });
+      return ul;
+    }
+    add("How this is made", "Serbian and international press reports are collected every morning from news feeds, sitemaps and Google News. Headlines are screened, relevant stories are coded by AI against a fixed codebook, and a brief is drafted. A team reviewer checks and approves every brief before it appears here. Copies of one story are grouped, and stories about the same event are joined.");
+    var src = el("div");
+    src.append(Object.keys(m.outlets_by_group).map(function (g) { return label(g) + ": " + m.outlets_by_group[g]; }).join("; "));
+    if (m.outlet_names) {
+      var det = el("details"), ul = el("ul");
+      det.append(el("summary", "", "List of outlets"));
+      Object.keys(m.outlet_names).forEach(function (g) { ul.append(el("li", "", label(g) + ": " + m.outlet_names[g].join(", "))); });
+      det.append(ul); src.append(det);
+    }
+    add("Sources", src);
+    add("Primary non-state sources", "Sites of parties, unions and associations (e.g. the Student List and UNS) are collected and linked but never count towards severity: they speak for themselves rather than corroborate.");
+    add("Severity", "Computed by script per event, across every outlet that reported it. 1: reported by one outlet group. 2: two or more groups, or an official outlet. 3: meets 2 and involves a top-tier post (ministers, acting president, Speaker, police, BIA, chief prosecutors, RIK, REM, RTS, NBS governor, heads of state companies).");
+    add("Codebook", "Version " + m.codebook_version + ", prompt " + m.prompt_version + ". AI summaries are in English; article text and quotes are never published here.");
     if (T) add("Trackers", "Built from the people, bodies and actions coded in each story, up to the end of the latest approved brief (" + shortDate(T.cutoff) + "). Accusations and calls to resign are attributed; a reported response is shown when there is one.");
     add("Validation", m.validation);
-    add("Known gaps", m.known_gaps.join(" "));
+    add("Known gaps", bullets(m.known_gaps));
     m.service_notes.forEach(function (n) { add("Service notice", n); });
-    add("Corrections and takedown", m.takedown_contact);
+    var mail = el("a", "", m.takedown_contact); mail.href = "mailto:" + m.takedown_contact;
+    var take = el("span", "", "Public figures and public roles only. To ask for a correction or removal, write to ");
+    take.append(mail, ".");
+    add("Corrections and takedown", take);
     section.append(dl);
     return section;
   }
@@ -285,6 +384,8 @@ td.num { font-family: var(--data); text-align: right; white-space: nowrap; }
     nodes.push(focusPanel(brief), briefPanel(brief));
     if (brief.catch_up && brief.catch_up.items.length) nodes.push(catchUpPanel(brief));
     nodes.push.apply(nodes, trackerPanels());
+    var articles = articlePanel();
+    if (articles) nodes.push(articles);
     nodes.push(methodPanel());
     app.replaceChildren.apply(app, nodes);
   }
