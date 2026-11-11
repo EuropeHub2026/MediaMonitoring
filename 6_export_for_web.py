@@ -1,4 +1,4 @@
-"""Build docs/data.js from approved briefs and trackers: headlines, summaries and links only.
+"""Build docs/data.js from approved briefs, trackers and coded stories: headlines, summaries and links only.
 
 Only briefs with `status: approved` and a named reviewer are read. Tracker entries are cut
 at the end of the latest approved brief's window, so nothing newer than a reviewed brief
@@ -114,6 +114,8 @@ def method_notes(cfg: dict[str, Any], outlets: list[dict[str, str]]) -> dict[str
     status = json.loads(status_path.read_text(encoding="utf-8")) if status_path.exists() else {}
     return {"codebook_version": codebook.CODEBOOK_VERSION, "prompt_version": codebook.PROMPT_VERSION,
             "outlets_by_group": dict(sorted(Counter(o["outlet_group"] for o in outlets).items())),
+            "outlet_names": {g: sorted({o["name"] for o in outlets if o["outlet_group"] == g}, key=str.casefold)
+                             for g in sorted({o["outlet_group"] for o in outlets})},
             "known_gaps": cfg["method"]["known_gaps"], "validation": cfg["method"]["validation"],
             "takedown_contact": cfg["project"]["contact_email"],
             "service_notes": [v["detail"] for v in status.values() if v.get("state") == "cap_hit"]}
@@ -179,6 +181,46 @@ def tracker_data(cfg: dict[str, Any], cutoff: str, outlets: dict[str, str]) -> d
             "resignations": resignations, "emerging_leaders": leaders, "transition_timeline": timeline}
 
 
+def read_page_actors(cfg: dict[str, Any]) -> dict[str, dict[str, str]]:
+    """Actors that may appear on the page (seed or confirmed, never proposed), by id."""
+    path = config.path(cfg, "actors_csv")
+    if not path.exists():
+        return {}
+    with path.open(encoding="utf-8", newline="") as fh:
+        return {row["actor_id"]: row for row in csv.DictReader(fh) if row.get("status") != "proposed"}
+
+
+def article_list(cfg: dict[str, Any], cutoff: str, outlets: dict[str, str]) -> list[dict[str, Any]]:
+    """Relevant coded stories published up to the cutoff, newest first: headline, summary, link.
+
+    Only listed actors are named; no story ids, entity rows, text or evidence quotes.
+    """
+    path = config.path(cfg, "coded_jsonl")
+    if not path.exists():
+        return []
+    actors = read_page_actors(cfg)
+    end = datetime.fromisoformat(cutoff)
+    rows = []
+    with path.open(encoding="utf-8") as fh:
+        for line in fh:
+            row = json.loads(line)
+            ext = row["extraction"]
+            if not ext.get("relevant") or datetime.fromisoformat(row["published"]) > end:
+                continue
+            ids = [a for a in ext.get("actors", []) if a in actors]
+            rows.append({
+                "published": row["published"], "title": row["title"], "url": row["source_url"],
+                "outlet": outlets.get(row["outlet_id"], row["outlet_id"]),
+                "summary": ext["summary"],
+                "categories": [c for c in (ext["category"], ext.get("secondary_category")) if c],
+                "actors": [actors[a]["name"] for a in ids],
+                "unconfirmed": [actors[a]["name"] for a in ids if actors[a].get("status") != "confirmed"],
+                "outlet_groups": row["outlet_groups"], "n_copies": row.get("n_copies", 1),
+                "severity": row["severity"]})
+    rows.sort(key=lambda r: r["published"], reverse=True)
+    return rows
+
+
 def build(cfg: dict[str, Any]) -> dict[str, Any]:
     """The page data; raises ValueError when no brief is approved."""
     paths = approved_paths(cfg)
@@ -193,6 +235,8 @@ def build(cfg: dict[str, Any]) -> dict[str, Any]:
     trackers = tracker_data(cfg, cutoff, names) if cutoff else None
     if trackers:
         data["trackers"] = trackers
+    if cutoff:
+        data["articles"] = article_list(cfg, cutoff, names)
     return data
 
 

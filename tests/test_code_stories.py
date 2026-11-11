@@ -205,6 +205,16 @@ def test_recode_stale_replaces_old_rows_only(cfg: dict, tmp_path: Path) -> None:
     assert all(r["codebook_version"] == codebook.CODEBOOK_VERSION for r in after.values())
 
 
+def test_codebook_patch_version_is_not_stale(cfg: dict, tmp_path: Path) -> None:
+    code.run(cfg, client=FakeClient())
+    path = tmp_path / "coded.jsonl"
+    rows = [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines()]
+    major, minor, _ = codebook.CODEBOOK_VERSION.split(".")
+    rows[0]["codebook_version"] = f"{major}.{minor}.99"
+    path.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+    assert code.run(cfg, client=FakeClient(), recode_stale=True) == 0
+
+
 def test_published_since_keeps_recent_stories() -> None:
     copies = {"old": [{"published": "2026-11-01T10:00:00+01:00"}],
               "new": [{"published": "2026-11-01T10:00:00+01:00"}, {"published": "2026-11-03T08:00:00+01:00"}],

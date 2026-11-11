@@ -1,12 +1,14 @@
 # Codebook
 
-**Version 0.2.0** (3 Nov 2026). Prompt version 0.2.0. Triage prompt version 0.1.1.
+**Version 0.2.1** (11 Nov 2026). Prompt version 0.2.0. Triage prompt version 0.1.1.
 
 This is the plain-English codebook for the Serbia Post-Election Monitor. `codebook.py`
 holds the same lists, the `Extraction` schema and the prompt. Keep the two in sync and
 bump the version in both whenever either changes. Before any change after v0.1.0, run
 `10_validate.py` on the hand-coded sample and record the before and after numbers in the
-change log at the end.
+change log at the end. The sample is collected stories hand-coded by team reviewers (target
+50 English and 50 Serbian by stage 6); until it exists, a change note says so and reports
+any provisional check, which is not validation.
 
 ## Principles
 
@@ -20,10 +22,19 @@ change log at the end.
 
 ## Unit of coding
 
-A **story** is one event or announcement reported by one or more outlets. Copies of the
-same story are grouped under one `story_id` at collection; the story is coded once, from
-its fullest copy. A **thread** (`thread_id`) links stories about the same running issue on
-different days (e.g. the NIS licence, a dismissal demand later met).
+A **story** is one article reported by one or more outlets under matching headlines.
+Copies are grouped under one `story_id` at collection; the story is coded once, from its
+fullest copy.
+
+An **event** (`event_id`) joins stories about the same happening reported under different
+headlines: published within two days of the event's first story, sharing a category, with
+similar English summaries. Events are formed by script from the coded fields (no AI call),
+and severity and the transition timeline are per event.
+
+A **thread** (`thread_id`) links events about the same running issue on different days
+(e.g. the NIS licence, a dismissal demand later met) through shared named people or bodies.
+A reviewer can merge or split threads. Events and threads are recomputed from all coded
+stories on every coding run.
 
 ## Headline triage
 
@@ -114,13 +125,16 @@ And:
 
 ## Severity (computed by script, never by the model)
 
+Severity is computed per **event**, across every copy of every story in it, so all
+stories of one event share one severity.
+
 | Severity | Rule |
 |---|---|
 | 1 | Reported by one outlet group only. |
 | 2 | Reported by two or more outlet groups, or by an `official` outlet. |
-| 3 | Meets 2 and `top_tier` is yes. |
+| 3 | Meets 2 and `top_tier` is yes for at least one story in the event. |
 
-A story of severity 2 or 3 records the confirming article ids: two articles from different
+An event of severity 2 or 3 records the confirming article ids: two articles from different
 outlet groups, or one official article. Aggregator copies whose original outlet is unknown
 do not count towards confirmation, and neither do `primary_nonstate` sources (party, union
 and association sites such as the Student List site or UNS): they speak for themselves
@@ -228,3 +242,4 @@ when someone leaves a post: update `role` and `as_of`.
 | 0.1.2 | 2 Nov 2026 | Widened `relevant`: state-level alert-category matters count without an explicit election link; headline-only stories judged on the headline; `background` narrowed. Prompt 0.1.1. | No hand-coded sample yet, so no `10_validate.py` numbers. Informal check on the 15 of 30 stories rejected under 0.1.0: 9 now relevant. |
 | 0.1.3 | 2 Nov 2026 | `transition_milestone` limited to news of a new formal step, commentary on the outcome is `background`; `top_tier` limited to current holders who are a subject of the main development. Prompt 0.1.2. | No `10_validate.py` yet. Provisional check against 30 Claude-coded stories (not reviewer codes), 12 English and 18 Serbian: category 63% to 80%, `top_tier` 77% to 90%, `relevant` 90% unchanged. The fixes were designed on this same sample. |
 | 0.2.0 | 3 Nov 2026 | Media-independence strand: `relevant`, `institution_change` and triage cover closure, ownership or management decisions at major national media and lawsuits involving journalists; `legal_challenge` covers private lawsuits by or against public figures; new action `sued`; new entity field `stage` (`completed` / `announced` / `not_addressed`). `primary_nonstate` outlet group does not count towards severity. Prompt 0.2.0, triage prompt 0.1.1. | No `10_validate.py` yet. Same 30 Claude-coded stories (not reviewer codes). Before (0.1.3): relevant 90%, category 80%, `top_tier` 90%. After (0.2.0, rerun after narrowing the media rule; 29 scored, 1 failed the quote limit): relevant 90%, category 86%, `top_tier` 90%. A first 0.2.0 run, before the narrowing, scored category 70%; four stories unrelated to the change flipped between the two runs, so run-to-run variation exceeds the measured difference. The sample has no media-independence or lawsuit stories and no hand-coded `stage`, so the new fields are unvalidated; two synthetic inputs (Nova/Radar closure, Memedović/Kovačević lawsuits) were coded as intended. |
+| 0.2.1 | 11 Nov 2026 | Wording only, no change to lists, schema or prompt (prompt stays 0.2.0, no recoding needed): unit of coding adds events; severity is described per event (as computed by `grouping.py` since 10 Nov); the validation sample is reviewer hand-coding of collected stories, since the licensed newsletter is no longer used as a sample. | No coding change, so no before and after numbers. No reviewer hand-coded sample exists yet. |

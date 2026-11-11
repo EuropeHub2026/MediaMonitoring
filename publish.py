@@ -44,21 +44,23 @@ def check_gate(cfg: dict[str, Any], day: date) -> Path:
 def check_no_quotes(cfg: dict[str, Any], data: dict[str, Any]) -> None:
     """Raise GateError if any stored evidence quote appears in the page data.
 
-    A quote that is part of the story's own headline is skipped: headlines may be published,
-    and for headline-only stories the model can only quote the headline.
+    A quote that is part of a coded story's headline is skipped: headlines may be published,
+    for headline-only stories the model can only quote the headline, and one outlet's quote
+    is sometimes another outlet's headline for the same event.
     """
     coded = config.path(cfg, "coded_jsonl")
     if not coded.exists():
         return
     payload = json.dumps(data, ensure_ascii=False)
     with coded.open(encoding="utf-8") as fh:
-        for line in fh:
-            row = json.loads(line)
-            quote = row["extraction"].get("evidence_quote", "")
-            if quote and quote in (row.get("title") or ""):
-                continue
-            if quote and len(quote) > 20 and quote in payload:
-                raise GateError(f"an evidence quote reached the page data: {quote[:40]}...")
+        rows = [json.loads(line) for line in fh]
+    headlines = "\n".join(row.get("title") or "" for row in rows)
+    for row in rows:
+        quote = row["extraction"].get("evidence_quote", "")
+        if quote and quote in headlines:
+            continue
+        if quote and len(quote) > 20 and quote in payload:
+            raise GateError(f"an evidence quote reached the page data: {quote[:40]}...")
 
 
 def commit(cfg: dict[str, Any], day: date) -> None:

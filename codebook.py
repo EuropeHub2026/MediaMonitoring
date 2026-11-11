@@ -14,7 +14,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-CODEBOOK_VERSION = "0.2.0"
+CODEBOOK_VERSION = "0.2.1"
 PROMPT_VERSION = "0.2.0"
 TRIAGE_PROMPT_VERSION = "0.1.1"
 

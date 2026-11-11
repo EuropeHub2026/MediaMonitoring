@@ -240,10 +240,20 @@ def pending_stories(cfg: dict[str, Any], links: list[dict[str, str]], coded_ids:
                                       max((c["published"] for c in copies.get(s, [])), default="")), reverse=True)
 
 
+def coding_version(version: str | None) -> str:
+    """Major.minor of a codebook version. A patch bump (e.g. 0.2.0 to 0.2.1) is wording only."""
+    return ".".join((version or "").split(".")[:2])
+
+
 def stale_stories(coded: list[dict[str, Any]], by_story: dict[str, list[dict[str, str]]]) -> list[str]:
-    """Story ids coded under an older codebook version that still have an article to recode."""
+    """Story ids coded under an older prompt or codebook version that still have an article to recode.
+
+    Codebook patch versions change wording only, never the coding, so they do not make a row stale.
+    """
+    current = coding_version(codebook.CODEBOOK_VERSION)
     return [r["story_id"] for r in coded
-            if r.get("codebook_version") != codebook.CODEBOOK_VERSION and by_story.get(r["story_id"])]
+            if (coding_version(r.get("codebook_version")) != current
+                or r.get("prompt_version") != codebook.PROMPT_VERSION) and by_story.get(r["story_id"])]
 
 
 def replace_row(path: Path, coded: list[dict[str, Any]], row: dict[str, Any]) -> None:

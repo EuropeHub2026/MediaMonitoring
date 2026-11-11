@@ -104,7 +104,9 @@ the handover (e.g. Ivica Dačić caretaker interior minister).
 - `codebook.md` (plain-English definitions) and `codebook.py` (the same lists, the Pydantic
   schema `Extraction`, and `prompt_text()`) are the single source of truth. Keep them in
   sync and bump `CODEBOOK_VERSION` whenever either changes (and `PROMPT_VERSION`, also
-  in `codebook.py`, whenever the prompt text changes). Scripts import from
+  in `codebook.py`, whenever the prompt text changes). A patch bump (0.2.0 to 0.2.1) is
+  for wording that leaves lists, schema and prompt unchanged; it does not make coded rows
+  stale for `--recode-stale`. Scripts import from
   `codebook.py`; they never define their own copies of the lists.
 - **Story level (coded by the model):** `relevant` (yes/no), `category` (one alert
   category or `background`), `secondary_category` (optional, a different alert category
@@ -157,29 +159,12 @@ the handover (e.g. Ivica Dačić caretaker interior minister).
 - Built and validated on English first; the Serbian sample is checked by the
   Serbian-reading reviewer.
 
-## Reference material: `ExecutiveBriefings/`
+## Out of scope: `ExecutiveBriefings/` (decided 11 Nov)
 
-Daily PDF issues of *Executive Newsletter* (Ninamedia), an English-language subscription
-digest of Serbian business and political news, one file per weekday (e.g.
-`okt30pet.pdf`). The licence reserves all rights and prohibits redistribution, so:
-
-- The folder is git-ignored and must never be committed, quoted on the page, put in
-  `docs/` or `exports/`, or sent to an AI API in bulk.
-- It is **not** a pipeline source. `1_collect_press.py` never reads it.
-- Uses inside the Codespace only:
-  1. **Early validation set.** Each issue has about 15 stories already in English with the
-     original outlet credited (N1, RTS, Beta, Forbes Srbija, Radar…). Reviewers hand-code
-     them (roughly half are useful `relevant = no` examples) so `10_validate.py` has a
-     sample from stage 1. Extracted headlines and hand codes go in
-     `data/validation/` (git-ignored); PDFs are read with `pypdf`.
-  2. **Recall check.** For each weekday, did the collector find the political and
-     transition stories the newsletter led with? Reported as a number in the validation
-     report, without reproducing their text.
-  3. **Seed lists.** Officials and outlets named in it inform `actors.csv` and
-     `outlets.csv`.
-  4. **Benchmark for selection.** Their lead items (4 to 8 a day) are a sanity check on
-     the brief's five to eight; our brief adds the "why it matters" line and the source
-     trail.
+The licensed *Executive Newsletter* PDFs are no longer used for anything: not as a
+validation sample, recall check, seed list or benchmark. The folder stays git-ignored and
+must never be committed, quoted, put in `docs/` or `exports/`, or sent to an AI API. No
+script reads it. Validation relies on reviewer hand-coding of collected stories (stage 6).
 
 ## Pipeline
 
@@ -222,8 +207,8 @@ The same gate applies to the weekly digest.
   the next run.
 - Before changing the prompt or codebook, run `10_validate.py` on the existing
   hand-coded sample and report the before and after numbers. Until stage 6 the sample is
-  whatever has been hand-coded so far (starting with the `ExecutiveBriefings/` stories);
-  if none exists yet, say so in the change note.
+  whatever collected stories reviewers have hand-coded so far; if none exists yet, say so
+  in the change note.
 - Be polite to websites: at least 2 seconds between requests to the same domain, a clear
   User-Agent naming the project and a contact address, no retries on 403 or 429.
 - Social collectors fetch posts from the fixed account and page lists in `config.yaml` only.
@@ -302,7 +287,7 @@ review/     brief_YYYY-MM-DD.md, digest_YYYY-WW.md   (git-ignored)
 data/       links.csv, articles.csv, coded.jsonl, trackers.json, social.csv,
             social_trends.json, validation/          (git-ignored)
 tests/      test_*.py, fixtures/
-ExecutiveBriefings/  licensed newsletter PDFs, reference only (git-ignored, never committed)
+ExecutiveBriefings/  licensed newsletter PDFs, out of scope since 11 Nov (git-ignored, never committed)
 ```
 
 ## Staged plan
@@ -328,7 +313,7 @@ stage 2 onwards are moved back by about four working days.
 - [x] `1_collect_press.py` written from scratch with Serbian sources and story grouping — 30 Oct (first live run: ~2,500 links, ~2,200 stories, 85 s; shared polite client in `http_client.py`)
 - [x] `2_extract_text.py` written from scratch — 30 Oct (headline triage before fetching, decided 30 Oct to keep coding volume within budget; live text test 39/40 full; first live triage 2 Nov: 5,701 stories, 2,157 passed, 38%)
 - [x] `3_code_stories.py` with structured outputs, script-computed severity and `thread_id`; coded 30 stories and eyeballed them — 2 Nov (0 failed; real cost about $0.004 a story, token use now logged by `ai_client.py`; `relevant` was too narrow and was widened in prompt 0.1.1 / codebook 0.1.2: no hand-coded sample existed, so no `10_validate.py` numbers; informal before/after on the 15 rejected stories: 9 flipped to relevant, including NIS/OFAC. Not reviewer-checked. Open issue, fixed 10 Nov by `event_id`: same event under different headlines split into several `story_id`s, so severity differed between them, e.g. RIK results at 3 and 1)
-- [ ] First `ExecutiveBriefings/` stories hand-coded into `data/validation/` as the early sample
+- ~~First `ExecutiveBriefings/` stories hand-coded into `data/validation/` as the early sample~~ — dropped 11 Nov: the newsletter is out of scope; validation moves to reviewer hand-coding of collected stories in stage 6
   - 2 Nov: not done from the newsletters. As a stopgap Claude coded 30 randomly drawn collected stories from excerpts (`data/validation/hand_codes_claude.csv`), which is not independent validation. Prompt 0.1.2 / codebook 0.1.3 scored category 80%, `top_tier` 90%, `relevant` 90% against them (before: 63%, 77%, 90%), on the sample the fixes were designed from. The 30 coded stories in `data/coded.jsonl` predate these versions and need recoding. A reviewer still needs to check these codes.
 - [x] `4_draft_brief.py` producing the brief and the alert focus box with story ids — 2 Nov (stories consolidated by thread; the model writes and merges focus lines, severity and rank stay script-computed across the cited stories; 396 coded, 4 failed on the 25-word quote limit and retry next run; first draft in `review/brief_2026-11-02.md`, numbers and names traced to sources)
 - [x] `publish.py` with the approval gate; `6_export_for_web.py`; `docs/index.html` with the focus box, brief and method notes — 2 Nov (template in `web/index.html`, copied to `docs/` by `publish.py` so nothing reaches `docs/` before approval; `publish.py` also refuses if an evidence quote reaches the page data; script parses, not yet seen in a browser)
@@ -342,10 +327,10 @@ Done when: a reviewer has approved one real morning brief and it is visible at t
 
 - [x] `5_build_trackers.py`: resignation and dismissal tracker, emerging leaders, transition timeline from entity rows — 3 Nov (all coded rows recoded to 0.2.0 first via `3_code_stories.py --recode-stale`; `--since` codes the next brief's window before the backlog, about 1,900 older triaged stories still uncoded. Proposed names go to `pending_review` in `trackers.json`, never into a tracker; entries carry the actor's `seed`/`confirmed` status. Open: whether seed actors may appear on the page before sign-off; emerging leaders ranks by coverage growth and so includes incumbents; the prior-week comparison is empty until about 9 Nov.) 3 Nov: `6_export_for_web.py` exports the three trackers, cut at the end of the latest approved brief's window, without story ids, thread ids or `pending_review`; `web/index.html` shows timeline, resignation tracker and emerging leaders, with a note while names are still seed actors. Checked headless at 390 px dark and 1100 px light: no script errors, no sideways scroll. Published with the 10 Nov brief after the team agreed to show seed actors with the "not confirmed" note (10 Nov). The timeline repeats the same event under several headlines (the open story-splitting issue).
 - [x] Fix story splitting before stage 3: merge same-event stories before computing severity, so one event has one severity and one timeline entry — 10 Nov (`grouping.py`: `event_id` from summary similarity, IDF-weighted, at least 3 shared content words, threshold 0.2 chosen by reading sampled pairs; threads now chain events and are recomputed in date order every run, since coding out of order had left most same-issue stories unthreaded. On 1,154 relevant stories: 637 events, 351 threads (was 565); the RIK rerun results are one timeline entry of 21 stories instead of about eight; 383 stories rose in severity (mostly 1 to 2 or 3) by sharing their event's corroboration. Sampled merges were correct; some same-event headline-only stories still stand alone. Not reviewer-checked. Threads are broad: the largest (151 stories) joins Alta banka with other organised-crime prosecutor stories through the shared TOK entity. `codebook.md` still describes severity per story; reword it at the next codebook version.)
-- [ ] Article list panel with search and filters (category, actor, outlet group, date)
-- [ ] Method notes panel: sources, codebook version, known gaps, takedown contact
-- [ ] Page checked at phone width and in dark mode
-- [ ] Reviewer rota and the 07:30 / 09:00 routine written in `README.md`
+- [x] Article list panel with search and filters (category, actor, outlet group, date) — 11 Nov (`6_export_for_web.py` exports relevant coded stories up to the latest approved brief's window end: headline, English summary, one link, categories, listed actor names, outlet groups, event severity; no ids, entity rows, text or quotes; 1,154 stories, about 1.1 MB of page data. `publish.py`'s quote gate now skips a quote that is any collected headline, since one outlet's quote is sometimes another's headline for the same event)
+- [x] Method notes panel: sources, codebook version, known gaps, takedown contact — 11 Nov (adds the outlet list per group, the `primary_nonstate` rule, severity per event, known gaps as a list and a mailto takedown link)
+- [x] Page checked at phone width and in dark mode — 11 Nov (headless Chromium at 390 px dark and 1100 px light: no script errors, no sideways scroll, filters work)
+- [ ] Reviewer rota and the 07:30 / 09:00 routine written in `README.md` — 11 Nov: routine, morning commands and review checklist written; the rota table needs the team's names
 
 Done when: the page carries two consecutive approved briefs plus the three trackers, and the link has gone to the first named external readers.
 

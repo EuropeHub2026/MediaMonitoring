@@ -250,3 +250,55 @@ def test_catch_up_section_is_exported_separately(cfg: dict) -> None:
     assert [i["headline"] for i in brief["catch_up"]["items"]] == ["Gap item"]
     assert brief["catch_up"]["items"][0]["sources"] == [{"name": "RIK", "url": "https://x.test/9"}]
     assert "s9" not in json.dumps(brief)
+
+
+def coded_row(story: str, published: str, relevant: bool = True, actors: list | None = None) -> dict:
+    return {"story_id": story, "thread_id": "t-x", "event_id": "e-x", "published": published,
+            "title": f"Naslov {story}", "source_url": f"https://x.test/{story}", "outlet_id": "rik",
+            "outlet_groups": ["official"], "n_copies": 2, "severity": 2,
+            "extraction": {"relevant": relevant, "category": "post_change", "secondary_category": None,
+                           "actors": actors or [], "summary": f"Summary {story}.", "why_it_matters": "W.",
+                           "evidence_quote": "tajni citat koji nikad ne izlazi na stranicu",
+                           "entities": [{"person_or_body": "Proposed Person", "proposed": True}]}}
+
+
+def write_coded(cfg: dict, rows: list[dict]) -> None:
+    with (Path(cfg["paths"]["outlets_csv"]).parent / "actors.csv").open("w", encoding="utf-8", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["actor_id", "name", "status"])
+        w.writerow(["student_list", "Student List", "seed"])
+        w.writerow(["rts", "RTS", "confirmed"])
+        w.writerow(["new_one", "New One", "proposed"])
+    Path(cfg["paths"]["coded_jsonl"]).write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+
+
+def test_article_list_relevant_up_to_cutoff_newest_first(cfg: dict) -> None:
+    write_brief(cfg)
+    write_coded(cfg, [coded_row("a", "2026-11-01T10:00:00+01:00"), coded_row("b", "2026-11-02T09:00:00+01:00"),
+                      coded_row("late", "2026-11-03T09:00:00+01:00"),
+                      coded_row("no", "2026-11-01T11:00:00+01:00", relevant=False)])
+    articles = export.build(cfg)["articles"]
+    assert [a["title"] for a in articles] == ["Naslov b", "Naslov a"]
+    assert articles[0]["outlet"] == "RIK" and articles[0]["categories"] == ["post_change"]
+
+
+def test_article_list_names_listed_actors_only_and_hides_ids_and_quotes(cfg: dict) -> None:
+    write_brief(cfg)
+    write_coded(cfg, [coded_row("a", "2026-11-01T10:00:00+01:00", actors=["student_list", "rts", "new_one", "ghost"])])
+    article = export.build(cfg)["articles"][0]
+    assert article["actors"] == ["Student List", "RTS"] and article["unconfirmed"] == ["Student List"]
+    payload = json.dumps(article)
+    for hidden in ("story_id", "event_id", "thread_id", "tajni citat", "Proposed Person", "new_one"):
+        assert hidden not in payload
+    publish.run(cfg, date(2026, 11, 2), do_commit=False)
+
+
+def test_quote_equal_to_another_storys_headline_does_not_block(cfg: dict) -> None:
+    write_brief(cfg)
+    quote = "Savet je zabranio emitovanje Dnevnika na jedan dan"
+    own, other = coded_row("a", "2026-11-01T10:00:00+01:00"), coded_row("b", "2026-11-01T11:00:00+01:00")
+    own["extraction"]["evidence_quote"] = quote
+    other["title"] = quote
+    write_coded(cfg, [own, other])
+    publish.run(cfg, date(2026, 11, 2), do_commit=False)
+    assert quote in data_js(cfg)
